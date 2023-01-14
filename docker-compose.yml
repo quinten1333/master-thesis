@@ -1,0 +1,26 @@
+version: "3"
+services:
+  rabbitmq:
+    image: rabbitmq:3-management
+    hostname: 'rabbitmq'
+    volumes:
+      - ./rabbitmq.conf:/etc/rabbitmq/conf.d/11-custom.conf
+    ports:
+      - 15672:15672
+
+  gateway:
+    build:
+      context: blocks/gateway
+      args:
+        NODE_ENV: development
+    entrypoint: npm run dev
+    ports:
+      - 3000:3000
+    volumes:
+      - ./blocks/gateway/:/app
+      - ./libs:/libs
+    environment:
+      IOConfig: '[{"endpoint":"amqp://rabbitmq","queues":{"!gateway":{"steps":{"0":{"fnName":"identity","extraArgs":[],"outId":0,"outQueue":"!gateway"},"1":{"fnName":"reply","extraArgs":[]}}}}}]'
+      QUEUE_ID: 0
+      QUEUE_NAME: '!gateway'
+      DEBUG: 'gateway:*'
