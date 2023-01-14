@@ -20,7 +20,19 @@ services:
       - ./blocks/gateway/:/app
       - ./libs:/libs
     environment:
-      IOConfig: '[{"endpoint":"amqp://rabbitmq","queues":{"!gateway":{"steps":{"0":{"fnName":"identity","extraArgs":[],"outId":0,"outQueue":"!gateway"},"1":{"fnName":"reply","extraArgs":[]}}}}}]'
+      IOConfig: '[{"endpoint":"amqp://rabbitmq","queues":{"!gateway":{"steps":{"1":{"fnName":"reply","extraArgs":[]}}}}}]'
       QUEUE_ID: 0
-      QUEUE_NAME: '!gateway'
+      QUEUE_NAME: 'plusCalculation'
       DEBUG: 'gateway:*'
+
+  plus:
+    build:
+      context: blocks/plus
+      args:
+        NODE_ENV: development
+    entrypoint: npm run dev
+    volumes:
+      - ./blocks/plus/:/app
+      - ./libs:/libs
+    environment:
+      IOConfig: '[{"endpoint":"amqp://rabbitmq","queues":{"plusCalculation":{"steps":{"0":{"fnName":"plus","extraArgs":[2],"outId":0,"outQueue":"!gateway"}}}}}]'
