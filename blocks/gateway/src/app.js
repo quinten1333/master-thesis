@@ -10,7 +10,6 @@ const queueName = process.env.QUEUE_NAME;
 
 const openRequests = {};
 io.register('reply', (input, metadata) => {
-  console.log('Got reply', input);
   openRequests[metadata.reqId].json(input);
   delete openRequests[metadata.reqId];
 });
