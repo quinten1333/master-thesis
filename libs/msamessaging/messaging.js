@@ -37,11 +37,12 @@ export default class AMQPConn {
     this.channel.prefetch(5);
     debug('Connected to amqp');
 
-    // TODO: Properly call disconnect on shutdown/crash
+    process.once('SIGINT', this.disconnect); // Automatic gracefull disconnect
   }
 
-  disconnect = () => {
-    this.conn.close();
+  disconnect = async () => {
+    debug('Disconnecting from amqp');
+    await this.conn.close();
     this.conn = null;
     this.channel = null;
     this.replyQueue = null;
