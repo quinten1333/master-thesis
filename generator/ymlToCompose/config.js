@@ -1,18 +1,7 @@
 export default {
   gateway: {
     compose: {
-      build: {
-        context: 'blocks/gateway',
-        args: { NODE_ENV: 'dvelopment' }
-      },
-      entrypoint: 'npm run dev',
-      volumes: [
-        './blocks/gateway/:/app',
-        './libs:/libs'
-      ],
-      environment: {
-        DEBUG: 'gateway:*,messaging'
-      }
+      image: 'ghcr.io/quinten1333/mt-blocks:gateway'
     },
     dynamicCompose: (IOConfig) => {
       const compose = {};
@@ -37,28 +26,27 @@ export default {
   },
   plus: {
     compose: {
-      build: {
-        context: 'blocks/plus',
-        args: { NODE_ENV: 'dvelopment' }
-      },
-      entrypoint: 'npm run dev',
-      volumes: [
-        './blocks/plus/:/app',
-        './libs:/libs'
-      ]
+      image: 'ghcr.io/quinten1333/mt-blocks:plus'
     }
   },
   min: {
     compose: {
-      build: {
-        context: 'blocks/min',
-        args: { NODE_ENV: 'dvelopment' }
-      },
-      entrypoint: 'npm run dev',
-      volumes: [
-        './blocks/min/:/app',
-        './libs:/libs'
-      ]
+      image: 'ghcr.io/quinten1333/mt-blocks:min'
+    }
+  },
+  mul: {
+    compose: {
+      image: 'ghcr.io/quinten1333/mt-blocks:mul'
+    }
+  },
+  div: {
+    compose: {
+      image: 'ghcr.io/quinten1333/mt-blocks:div'
+    }
+  },
+  mod: {
+    compose: {
+      image: 'ghcr.io/quinten1333/mt-blocks:mod'
     }
   },
 }
