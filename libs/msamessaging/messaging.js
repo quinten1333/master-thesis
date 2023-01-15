@@ -76,7 +76,7 @@ export default class AMQPConn {
 
   //* Sending
   send = (queue, data) => {
-    debug('Message no-reply send with data', data);
+    debug('Message no-reply send with data %s to %s', data, queue);
     this.channel.sendToQueue(queue, Buffer.from(JSON.stringify(data)), { timestamp: Date.now() });
   }
 
