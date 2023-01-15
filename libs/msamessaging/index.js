@@ -16,6 +16,9 @@ export default class MSAMessaging {
     this.connections = [];
 
     this.reqIdCounter = 0;
+
+    // Contains the config of step '0' if present.
+    this.initialStep = null;
   }
 
   register(name, fn) {
@@ -39,6 +42,13 @@ export default class MSAMessaging {
 
         for (const step in queueConfig.steps) {
           const stepConfig = queueConfig.steps[step];
+          if (step === '0') {
+            this.initialStep = stepConfig;
+
+            if (typeof stepConfig.outQueue === 'undefined') {
+              throw new Error('Initial step does not have an output!');
+            }
+          }
 
           if (!this.functions[stepConfig.fnName]) {
             throw new Error(`Function ${stepConfig.fnName} used in config but is not registered!`);
@@ -81,7 +91,7 @@ export default class MSAMessaging {
     }
   }
 
-  async start(config = null) {
+  start = async (config = null) => {
     if (this.started) {
       throw new Error('You cannot start IO twice!');
     }
@@ -100,11 +110,19 @@ export default class MSAMessaging {
 
       this.connections.push(conn);
     }
+
+    if (this.initialStep) {
+      this.functions[this.initialStep.fnName](null, null, ...this.initialStep.extraArgs);
+    }
   }
 
-  run(queueId, queueName, input, metadata={}) {
+  run = (input, metadata={}) => {
+    if (!this.initialStep) {
+      throw new Error('IOConfig does not have a step 0 so this node is not configured to be the entrypoint');
+    }
+
     const reqId = ++this.reqIdCounter;
-    this.connections[queueId].send(queueName, { ...metadata, reqId, step: 0, input });
+    this.connections[this.initialStep.outId].send(this.initialStep.outQueue, { ...metadata, reqId, step: 1, input });
 
     return reqId;
   }
