@@ -20,10 +20,8 @@ services:
       - ./blocks/gateway/:/app
       - ./libs:/libs
     environment:
-      IOConfig: '[{"endpoint":"amqp://rabbitmq","queues":{"!gateway":{"steps":{"1":{"fnName":"reply","extraArgs":[]}}}}}]'
-      QUEUE_ID: 0
-      QUEUE_NAME: 'plusCalculation'
-      DEBUG: 'gateway:*'
+      IOConfig: '[{"endpoint":"amqp://rabbitmq","queues":{"!gateway":{"steps":{"0":{ "fnName":"listen","extraArgs":[{"port": 3000}],"outId":0,"outQueue":"plusCalculation"},"2":{"fnName":"reply","extraArgs":[{"port": 3000}]}}}}}]'
+      DEBUG: 'gateway:*,messaging'
 
   plus:
     build:
@@ -35,4 +33,5 @@ services:
       - ./blocks/plus/:/app
       - ./libs:/libs
     environment:
-      IOConfig: '[{"endpoint":"amqp://rabbitmq","queues":{"plusCalculation":{"steps":{"0":{"fnName":"plus","extraArgs":[2],"outId":0,"outQueue":"!gateway"}}}}}]'
+      IOConfig: '[{"endpoint":"amqp://rabbitmq","queues":{"plusCalculation":{"steps":{"1":{"fnName":"plus","extraArgs":[2],"outId":0,"outQueue":"!gateway"}}}}}]'
+      DEBUG: 'messaging'

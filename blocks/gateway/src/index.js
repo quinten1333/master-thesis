@@ -1,18 +1,20 @@
-import http from 'http';
-import app, { io } from './app.js'
-import debugLib from 'debug';
-const debug = debugLib('gateway:index');
+import MSAMessaging from '../../../libs/msamessaging/index.js';
+import createServer from './app.js';
 
-const port = parseInt(process.env.PORT) || 3000;
+const servers = {};
+const io = new MSAMessaging();
+io.register('identity', (input) => input);
 
-app.set('port', port);
-const server = http.createServer(app);
 
-server.on('error', console.error);
-server.on('listening', () => {
-  debug(`Listening on ${port}`);
+io.register('reply', (input, metadata, args) => {
+  servers[args.port][metadata.reqId].json(input);
+  delete servers[args.port][metadata.reqId];
 });
 
-io.start().then(() => {
-  server.listen(port);
-})
+io.register('listen', (input, metadata, args) => {
+  const port = args.port;
+  const openRequests = createServer(port, io);
+  servers[port] = openRequests;
+});
+
+io.start();
