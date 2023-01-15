@@ -12,6 +12,10 @@ const generateIOConfig = (doc) => {
     step = parseInt(step);
     const stepConfig = doc.steps[step];
 
+    if (!stepConfig.block) {
+      throw new Error(`Required parameter block missing on step ${step}!`);
+    }
+
     if (!(stepConfig.block in result)) {
       result[stepConfig.block] = [{
         endpoint: doc.endpoint,
@@ -43,6 +47,10 @@ const generateDockerCompose = (doc, IOConfig) => {
   };
 
   for (const service in IOConfig) {
+    if (!config[service]) {
+      throw new Error(`Service ${service} is not configured!`);
+    }
+
     const dynamicCompose = config[service].dynamicCompose;
     const dynamicConfigRes = dynamicCompose ? dynamicCompose(IOConfig[service]) : {};
 
