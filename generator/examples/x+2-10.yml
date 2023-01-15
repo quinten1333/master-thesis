@@ -1,5 +1,5 @@
 
-name: x*30\30+5-5
+name: x + 2 - 10
 # mode: optimized
 endpoint: amqp://rabbitmq
 steps:
@@ -7,22 +7,14 @@ steps:
   fn: listen
   extraArgs:
   - port: 3000
-- block: mul
-  fn: mul
-  extraArgs:
-  - 30
-- block: div
-  fn: div
-  extraArgs:
-  - 30
 - block: plus
   fn: plus
   extraArgs:
-  - 5
+  - 2
 - block: min
   fn: min
   extraArgs:
-  - 5
+  - 10
 - block: gateway
   fn: reply
   extraArgs:
