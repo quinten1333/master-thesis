@@ -1,3 +1,5 @@
+# Example config
+```js
 const exampleConfigPlus = [ // x + 2 - 10
   {
     endpoint: 'amqp://rabbitmq',
@@ -70,9 +72,13 @@ const exampleReplyGateway = [
     }
   }
 ];
+```
 
+# Example data being send between everyone
+```js
 const exampleData = {
   reqId: 0,
   step: 1,
   input: 10, // Whatever type of object
 }
+```
