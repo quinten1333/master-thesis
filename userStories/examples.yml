@@ -1,0 +1,33 @@
+
+- input:
+    type: http request
+    conditions:
+      parameters:
+        input:
+          type: numeric
+        location:
+          equals: http
+  output:
+    type: store
+    params:
+      dataset: local
+      location:
+        type: file
+        name: output.txt
+
+
+- given: a http request with parameter which input is type numeric and parameter location equals "http"
+  then: return solved(x*30/30+5-5)
+- given: A numeric input and parameter location equals "store"
+  then: store solved(x*30/30+5-5) as "output.txt" in dataset "local"
+
+---
+
+- input:
+  type: dataset
+  location: https://people.sc.fsu.edu/~jburkardt/data/csv/mlb_players.csv
+
+
+
+- given: A dataset at "https://people.sc.fsu.edu/~jburkardt/data/csv/mlb_players.csv"
+  then: import the databse into an SQL database and return the columns of the dataset and ask for an SQL query, then execute the SQL query
