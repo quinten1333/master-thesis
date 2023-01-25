@@ -12,8 +12,8 @@ io.register('reply', ({ reqId, input }, args) => {
 });
 
 io.register('listen', ({ arch, start }, args) => {
+  const port = args.port;
   if (start) {
-    const port = args.port;
     servers[port] = createServer(port, arch);
   } else {
     servers[port].close();
