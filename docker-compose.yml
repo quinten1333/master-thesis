@@ -21,7 +21,7 @@ services:
     environment:
       PORT: 80
       IOConfig: '{ "endpoint": "amqp://rabbitmq" }'
-      DEBUG: architectureManager
+      DEBUG: architectureManager, messaging
 
   gateway:
     image: node:latest
@@ -35,6 +35,17 @@ services:
     environment:
       IOConfig: '{ "archEndpoint": "amqp://rabbitmq", "archExchange": "arch-management-gateway" }'
       DEBUG: 'gateway:*,messaging'
+
+  div:
+    image: node:latest
+    entrypoint: npm run dev
+    working_dir: /app
+    volumes:
+      - ./blocks/div/:/app
+      - ./libs:/libs
+    environment:
+      IOConfig: '{ "archEndpoint": "amqp://rabbitmq", "archExchange": "arch-management-div" }'
+      DEBUG: 'messaging'
 
   min:
     image: node:latest
