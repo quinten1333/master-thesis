@@ -9,6 +9,20 @@ services:
       - 15672:15672
       - 5672:5672
 
+  architectureManager:
+    image: node:latest
+    entrypoint: npm run dev
+    working_dir: /app
+    ports:
+      - 3001:80
+    volumes:
+      - ./blocks/architectureManager/:/app
+      - ./libs:/libs
+    environment:
+      PORT: 80
+      IOConfig: '{ "endpoint": "amqp://rabbitmq" }'
+      DEBUG: architectureManager
+
   gateway:
     image: node:latest
     entrypoint: npm run dev

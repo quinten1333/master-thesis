@@ -1,0 +1,25 @@
+doctype html
+html(lang="en")
+  include includes/head.pug
+  body
+    .container
+      h5 All loaded architectures
+      table.table.border
+        each arch in architectures
+          tr
+            td= arch.id
+            td= arch.name
+            td= arch.endpoint
+            if arch.active
+              td active
+              td
+                form(action="/architecture/" + arch.id + "/active")
+                  button.btn.btn-primary(type="submit", name="active" value="false") deactivate
+            else
+              td Inactive
+              td
+                form(action="/architecture/" + arch.id + "/active")
+                  button.btn.btn-primary(type="submit", name="active", value="true") activate
+            td
+              button.btn.btn-primary View drawing
+              a.btn.btn-primary(href="/architecture/" + arch.id + "/io") View IO
