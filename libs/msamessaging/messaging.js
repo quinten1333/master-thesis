@@ -34,7 +34,12 @@ export default class AMQPConn {
       tries += 1;
     }
     this.channel = await this.conn.createChannel();
-    this.channel.prefetch(5);
+    // this.channel.prefetch(5); // TODO What about prefetching
+    this.channel.on('error', async (err) => {
+      console.warn(`AMQP channel connected with ${this.endpoint} gave error: `, err);
+
+      this.channel = await this.conn.createChannel();
+    })
     debug('Connected to amqp');
 
     process.once('SIGINT', this.disconnect); // Automatic gracefull disconnect
@@ -42,9 +47,13 @@ export default class AMQPConn {
 
   disconnect = async () => {
     debug('Disconnecting from amqp');
-    await this.conn.close();
+
+    if (this.confirmChannel) await this.confirmChannel.close();
+    if (this.channel) await this.channel.close();
+    if (this.conn) await this.conn.close();
     this.conn = null;
     this.channel = null;
+    this.confirmChannel = null;
     this.replyQueue = null;
     this.sendInitialized = false;
   }
@@ -74,10 +83,45 @@ export default class AMQPConn {
     });
   }
 
+  /**
+   * Subscribe to a fanout exchange.
+   * @param {String} exchange The exchange to subscribe to
+   * @param {Function} callback The function that should be called for every message
+   */
+  subscribe = async (exchange, callback) => {
+    await this.channel.assertExchange(exchange, 'fanout');
+    const subscribeQueue = await this.channel.assertQueue('', { exclusive: true });
+    await this.channel.bindQueue(subscribeQueue.queue, exchange);
+    this.channel.consume(subscribeQueue.queue, (msg) => callback(JSON.parse(msg.content.toString())), { noAck: true });
+  }
+
   //* Sending
   send = (queue, data) => {
     debug('Message no-reply send with data %s to %s', data, queue);
     this.channel.sendToQueue(queue, Buffer.from(JSON.stringify(data)), { timestamp: Date.now() });
+  }
+
+  publish = async (exchange, data) => {
+    if (!this.confirmChannel) {
+      this.confirmChannel = await this.conn.createConfirmChannel();
+      this.confirmChannelLastErr = null;
+      this.confirmChannel.once('error', (err) => { // Prevents whole application from crashing
+        this.confirmChannelLastErr = err;
+        this.confirmChannel = null;
+      });
+    }
+
+    debug('Message published with data %s to %s', data, exchange);
+    return new Promise(async (resolve, reject) => {
+      this.confirmChannel.publish(exchange, '', Buffer.from(JSON.stringify(data)), { timestamp: Date.now() }, async (err, ok) => {
+        if (err) {
+          reject(this.confirmChannelLastErr || err);
+          return;
+        }
+
+        resolve();
+      });
+    })
   }
 
   /**
