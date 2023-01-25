@@ -45,10 +45,19 @@ export default class MSAMessaging {
 
   commands = {
     create: ({ archID, archIO }) => {
+      if (archID in this.arches) {
+        console.warn(`Architecture with ID ${archID} already exists.`);
+        return;
+      }
+
       this.arches[archID] = new MSAArchitecture(archIO, this.functions);
       this.arches[archID].start();
     },
     delete: ({ archID }) => {
+      if (!(archID in this.arches)) {
+        return;
+      }
+
       this.arches[archID].stop();
       delete this.arches[archID];
     }
