@@ -23,6 +23,7 @@ const conn = new AMQPConn(config.endpoint);
 let archId = -1;
 const architectures = {
   [-1]: new Architecture(conn, -1, 'Testing', yaml.load(`- block: gateway\n  fn: listen\n  extraArgs:\n  - port: 3000\n- block: plus\n  fn: plus\n  extraArgs:\n  - 2\n- block: min\n  fn: min\n  extraArgs:\n  - 10\n- block: gateway\n  fn: reply\n  extraArgs:\n  - port: 3000`), 'amqp://rabbitmq'),
+  [-2]: new Architecture(conn, -2, 'Testing mul, div, plus, min', yaml.load(`- block: gateway\n  fn: listen\n  extraArgs:\n  - port: 3000\n- block: mul\n  fn: mul\n  extraArgs:\n  - 30\n- block: div\n  fn: div\n  extraArgs:\n  - 30\n- block: plus\n  fn: plus\n  extraArgs:\n  - 5\n- block: min\n  fn: min\n  extraArgs:\n  - 5\n- block: gateway\n  fn: reply\n  extraArgs:\n  - port: 3000`), 'amqp://rabbitmq'),
 };
 
 const createApp = (port) => {
@@ -40,15 +41,19 @@ const createApp = (port) => {
 
   app.get('/', (req, res) => { res.render('index'); });
   app.get('/architecture', (req, res) => { res.render('architecture', { architectures })});
-  app.get('/architecture/:archId/active', async (req, res) => {
+  app.get('/architecture/:archId/active', async (req, res, next) => {
     const { archId } = req.params;
     const { active } = req.query;
-    console.log(archId, active)
     if (!archId) { res.status(400).send('No archId provided!'); return; }
-    if (active) {
-      await architectures[archId].create();
-    } else {
-      await architectures[archId].destroy();
+    try {
+      if (active === 'true') {
+        await architectures[archId].create();
+      } else {
+        await architectures[archId].delete();
+      }
+    } catch (error) {
+      next(error);
+      return;
     }
 
     res.redirect('/architecture');

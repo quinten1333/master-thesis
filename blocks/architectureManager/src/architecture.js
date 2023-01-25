@@ -58,15 +58,29 @@ export default class Architecture {
     // TODO: Check if service is running
 
     for (const service in this.IOConfig) {
-      this.conn.publish(`arch-management-${service}`, { command: 'create', payload: { archID: this.id, archIO: this.IOConfig[service] }})
+      try {
+        await this.conn.publish(`arch-management-${service}`, { command: 'create', payload: { archID: this.id, archIO: this.IOConfig[service] }})
+      } catch (error) {
+        if (error.code !== 404) { throw error; }
+
+        await new Promise((resolve) => setTimeout(resolve, 500));
+        await this.delete(true);
+        throw new Error(`Service ${service} not running. Architecture cannot be enabled!`);
+      }
     }
 
     this.active = true;
   }
 
-  async delete() {
+  async delete(ignoreErrors=false) {
     for (const service in this.IOConfig) {
-      this.conn.publish(`arch-management-${service}`, { command: 'delete', payload: { archID: this.id } })
+      try {
+        await this.conn.publish(`arch-management-${service}`, { command: 'delete', payload: { archID: this.id } })
+      } catch (error) {
+        if (ignoreErrors) { continue; }
+
+        throw error;
+      }
     }
 
     this.active = false;
