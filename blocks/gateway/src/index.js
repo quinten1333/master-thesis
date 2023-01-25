@@ -6,15 +6,18 @@ const io = new MSAMessaging();
 io.register('identity', (input) => input);
 
 
-io.register('reply', (input, metadata, args) => {
-  servers[args.port][metadata.reqId].json(input);
-  delete servers[args.port][metadata.reqId];
+io.register('reply', ({ reqId, input }, args) => {
+  servers[args.port].requests[reqId].json(input);
+  delete servers[args.port].requests[reqId];
 });
 
-io.register('listen', (input, metadata, args) => {
-  const port = args.port;
-  const openRequests = createServer(port, io);
-  servers[port] = openRequests;
+io.register('listen', ({ arch, start }, args) => {
+  if (start) {
+    const port = args.port;
+    servers[port] = createServer(port, arch);
+  } else {
+    servers[port].close();
+  }
 });
 
 io.start();

@@ -7,31 +7,61 @@ services:
       - ./rabbitmq.conf:/etc/rabbitmq/conf.d/11-custom.conf
     ports:
       - 15672:15672
+      - 5672:5672
 
   gateway:
-    build:
-      context: blocks/gateway
-      args:
-        NODE_ENV: development
+    image: node:latest
     entrypoint: npm run dev
+    working_dir: /app
     ports:
       - 3000:3000
     volumes:
       - ./blocks/gateway/:/app
       - ./libs:/libs
     environment:
-      IOConfig: '[{"endpoint":"amqp://rabbitmq","queues":{"!gateway":{"steps":{"0":{ "fnName":"listen","extraArgs":[{"port": 3000}],"outId":0,"outQueue":"plusCalculation"},"2":{"fnName":"reply","extraArgs":[{"port": 3000}]}}}}}]'
+      IOConfig: '{ "archEndpoint": "amqp://rabbitmq", "archExchange": "arch-management-gateway" }'
       DEBUG: 'gateway:*,messaging'
 
-  plus:
-    build:
-      context: blocks/plus
-      args:
-        NODE_ENV: development
+  min:
+    image: node:latest
     entrypoint: npm run dev
+    working_dir: /app
+    volumes:
+      - ./blocks/min/:/app
+      - ./libs:/libs
+    environment:
+      IOConfig: '{ "archEndpoint": "amqp://rabbitmq", "archExchange": "arch-management-min" }'
+      DEBUG: 'messaging'
+
+  mod:
+    image: node:latest
+    entrypoint: npm run dev
+    working_dir: /app
+    volumes:
+      - ./blocks/mod/:/app
+      - ./libs:/libs
+    environment:
+      IOConfig: '{ "archEndpoint": "amqp://rabbitmq", "archExchange": "arch-management-mod" }'
+      DEBUG: 'messaging'
+
+  mul:
+    image: node:latest
+    entrypoint: npm run dev
+    working_dir: /app
+    volumes:
+      - ./blocks/mul/:/app
+      - ./libs:/libs
+    environment:
+      IOConfig: '{ "archEndpoint": "amqp://rabbitmq", "archExchange": "arch-management-mul" }'
+      DEBUG: 'messaging'
+
+  plus:
+    image: node:latest
+    entrypoint: npm run dev
+    working_dir: /app
     volumes:
       - ./blocks/plus/:/app
       - ./libs:/libs
     environment:
-      IOConfig: '[{"endpoint":"amqp://rabbitmq","queues":{"plusCalculation":{"steps":{"1":{"fnName":"plus","extraArgs":[2],"outId":0,"outQueue":"!gateway"}}}}}]'
+      IOConfig: '{ "archEndpoint": "amqp://rabbitmq", "archExchange": "arch-management-plus" }'
       DEBUG: 'messaging'

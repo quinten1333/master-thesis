@@ -4,7 +4,7 @@ import http from 'http';
 import debugLib from 'debug';
 const debug = debugLib('gateway:app');
 
-const createApp = (port, io, openRequests) => {
+const createApp = (port, arch, openRequests) => {
   const app = express();
   app.set('port', port);
   app.disable('x-powered-by');
@@ -25,7 +25,7 @@ const createApp = (port, io, openRequests) => {
 
   app.get('/', (req, res) => {
     const params = JSON.parse(req.query.params);
-    const reqId = io.run(params);
+    const reqId = arch.run(params);
     openRequests[reqId] = res;
   })
 
@@ -52,16 +52,17 @@ const createApp = (port, io, openRequests) => {
   return app;
 }
 
-const createServer = (port, io) => {
+const createServer = (port, arch) => {
   const openRequests = {};
-  const app = createApp(port, io, openRequests);
+  const app = createApp(port, arch, openRequests);
   const server = http.createServer(app);
   server.on('error', console.error);
   server.on('listening', () => {
     debug(`Listening on ${port}`);
   });
   server.listen(port);
+  server.requests = openRequests;
 
-  return openRequests;
+  return server;
 }
 export default createServer;

@@ -34,7 +34,7 @@ export default class AMQPConn {
       tries += 1;
     }
     this.channel = await this.conn.createChannel();
-    this.channel.prefetch(5);
+    this.channel.prefetch(5); // TODO What about prefetching
     debug('Connected to amqp');
 
     process.once('SIGINT', this.disconnect); // Automatic gracefull disconnect
@@ -74,10 +74,27 @@ export default class AMQPConn {
     });
   }
 
+  /**
+   * Subscribe to a fanout exchange.
+   * @param {String} exchange The exchange to subscribe to
+   * @param {Function} callback The function that should be called for every message
+   */
+  subscribe = async (exchange, callback) => {
+    await this.channel.assertExchange(exchange, 'fanout');
+    const subscribeQueue = await this.channel.assertQueue('', { exclusive: true });
+    await this.channel.bindQueue(subscribeQueue.queue, exchange);
+    this.channel.consume(subscribeQueue.queue, (msg) => callback(JSON.parse(msg.content.toString())), { noAck: true });
+  }
+
   //* Sending
   send = (queue, data) => {
     debug('Message no-reply send with data %s to %s', data, queue);
     this.channel.sendToQueue(queue, Buffer.from(JSON.stringify(data)), { timestamp: Date.now() });
+  }
+
+  publish = (exchange, data) => {
+    debug('Message published with data %s to %s', data, exchange);
+    this.channel.publish(exchange, '', Buffer.from(JSON.stringify(data)), { timestamp: Date.now() });
   }
 
   /**
