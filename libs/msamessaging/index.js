@@ -192,6 +192,9 @@ class MSAArchitecture {
     if (!this.initialStep) {
       throw new Error('ArchIO does not have a step 0 so this node is not configured to be the entrypoint');
     }
+    if (!this.started) {
+      throw new Error('Architecture not started but tried to run it!')
+    }
 
     const reqId = ++this.reqIdCounter;
     this.conn.send(this.initialStep.outQueue, { ...metadata, reqId, step: 1, input });
