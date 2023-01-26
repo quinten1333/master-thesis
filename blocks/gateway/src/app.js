@@ -60,6 +60,9 @@ const createServer = (port, arch) => {
   server.on('listening', () => {
     debug(`Listening on ${port}`);
   });
+  server.on('close', () => {
+    debug(`Server on port ${port} closed`);
+  })
   server.listen(port);
   server.requests = openRequests;
 
