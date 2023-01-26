@@ -17,6 +17,7 @@ io.register('listen', ({ arch, start }, args) => {
     servers[port] = createServer(port, arch);
   } else {
     servers[port].close();
+    delete servers[port];
   }
 });
 
