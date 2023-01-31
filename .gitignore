@@ -1,2 +1,8 @@
 **/node_modules/**
+**/built/**
+
+**/__pycache__/**
+
 generator/examples/out
+
+**/.ipynb_checkpoints/**
