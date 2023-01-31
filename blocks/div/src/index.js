@@ -1,4 +1,4 @@
-import MSAMessaging from '../../../libs/msamessaging/index.js';
+import MSAMessaging from '@amicopo/msamessaging';
 
 const io = new MSAMessaging();
 io.register('div', ({ input: a }, b) => a / b);

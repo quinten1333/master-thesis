@@ -17,7 +17,7 @@ services:
       - 3001:80
     volumes:
       - ./blocks/architectureManager/:/app
-      - ./libs:/libs
+      - ./libs:/app/node_modules/@amicopo
     environment:
       PORT: 80
       IOConfig: '{ "endpoint": "amqp://rabbitmq" }'
@@ -31,7 +31,7 @@ services:
       - 3000:3000
     volumes:
       - ./blocks/gateway/:/app
-      - ./libs:/libs
+      - ./libs:/app/node_modules/@amicopo
     environment:
       IOConfig: '{ "archEndpoint": "amqp://rabbitmq", "archExchange": "arch-management-gateway" }'
       DEBUG: 'gateway:*,messaging'
@@ -42,7 +42,7 @@ services:
     working_dir: /app
     volumes:
       - ./blocks/div/:/app
-      - ./libs:/libs
+      - ./libs:/app/node_modules/@amicopo
     environment:
       IOConfig: '{ "archEndpoint": "amqp://rabbitmq", "archExchange": "arch-management-div" }'
       DEBUG: 'messaging'
@@ -53,7 +53,7 @@ services:
     working_dir: /app
     volumes:
       - ./blocks/min/:/app
-      - ./libs:/libs
+      - ./libs:/app/node_modules/@amicopo
     environment:
       IOConfig: '{ "archEndpoint": "amqp://rabbitmq", "archExchange": "arch-management-min" }'
       DEBUG: 'messaging'
@@ -64,7 +64,7 @@ services:
     working_dir: /app
     volumes:
       - ./blocks/mod/:/app
-      - ./libs:/libs
+      - ./libs:/app/node_modules/@amicopo
     environment:
       IOConfig: '{ "archEndpoint": "amqp://rabbitmq", "archExchange": "arch-management-mod" }'
       DEBUG: 'messaging'
@@ -75,7 +75,7 @@ services:
     working_dir: /app
     volumes:
       - ./blocks/mul/:/app
-      - ./libs:/libs
+      - ./libs:/app/node_modules/@amicopo
     environment:
       IOConfig: '{ "archEndpoint": "amqp://rabbitmq", "archExchange": "arch-management-mul" }'
       DEBUG: 'messaging'
@@ -86,7 +86,7 @@ services:
     working_dir: /app
     volumes:
       - ./blocks/plus/:/app
-      - ./libs:/libs
+      - ./libs:/app/node_modules/@amicopo
     environment:
       IOConfig: '{ "archEndpoint": "amqp://rabbitmq", "archExchange": "arch-management-plus" }'
       DEBUG: 'messaging'

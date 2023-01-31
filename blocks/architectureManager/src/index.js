@@ -12,7 +12,7 @@ import debugLib from 'debug';
 
 import yaml from 'js-yaml';
 
-import AMQPConn from '../../../libs/msamessaging/messaging.js';
+import AMQPConn from '@amicopo/msamessaging/messaging.js';
 import Architecture from './architecture.js';
 
 const debug = debugLib('architectureManager');

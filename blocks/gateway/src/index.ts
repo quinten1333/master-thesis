@@ -1,4 +1,4 @@
-import MSAMessaging from '../../../libs/msamessaging/index.js';
+import MSAMessaging from '@amicopo/msamessaging';
 import Server, { Route } from './app.js';
 
 const servers: {[port: number]: Server} = {};

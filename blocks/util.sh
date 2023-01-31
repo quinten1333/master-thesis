@@ -26,7 +26,11 @@ if [[ $block == 'all' ]]; then
   for dir in *; do
     if [[ -d $dir ]]; then
       echo "$dir"
-      $cmd "$dir"
+      if [[ $cmd == 'build' || $cmd == 'push' ]]; then
+        $cmd $dir
+      else
+        block="$dir" sh -c "$cmd"
+      fi
     fi
   done
 else
