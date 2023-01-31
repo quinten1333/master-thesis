@@ -24,6 +24,7 @@ const createApp = (port, arch, openRequests) => {
   }
 
   app.get('/', (req, res) => {
+    res.header('Connection', 'close');
     const params = JSON.parse(req.query.params);
     const reqId = arch.run(params);
     openRequests[reqId] = res;
