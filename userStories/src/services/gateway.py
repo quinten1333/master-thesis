@@ -1,4 +1,4 @@
-from ..Story import Story
+from Story import Story
 
 class Gateway:
   def __init__(self, port, method):
@@ -27,6 +27,6 @@ class Gateway:
 
 # TODO: Make method optional
 story = Story('^http (get|post|put|patch|delete) request port (\d+)', lambda config, match, method, port: Gateway(port, method))
-story.register(Story('parameter "(.*?)" of type "(.*?)"', lambda config, match, param, type: config.paramOfType(param, type)))
+story.register(Story("parameter `` (.*?) '' of type `` (.*?) ''", lambda config, match, param, type: config.paramOfType(param, type)))
 # story.register(Story('parameter "(.*?)" (equal|not equal) "(.*?)"', lambda config, match, param, cond, value: config.paramCondition(param, cond, value)))
 

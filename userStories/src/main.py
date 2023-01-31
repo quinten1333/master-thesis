@@ -12,8 +12,11 @@ if __name__ == "__main__":
 
   input = sys.argv[1]
   textAnalyser = TextAnalyser()
-  tokens = textAnalyser.tokenize(input)
-  analysedInput = tokens.join(' ') # 'http get request port 3000 parameter "input" of type "numeric"'
+  taggedTokens = textAnalyser.tokenize(input)
+  tokens = [token[0] for token in taggedTokens]
+  tokens.pop(0) # Remove "Given"
+
+  analysedInput = ' '.join(tokens)
 
   for story in stories:
     conf = story.run(analysedInput)
