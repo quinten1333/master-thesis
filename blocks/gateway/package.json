@@ -10,7 +10,8 @@
     "dev:js": "nodemon built/index.js",
     "dev:tsc": "tsc --watch --preserveWatchOutput",
     "build": "tsc",
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "concurrently npm:dev:tsc npm:test:js",
+    "test:js": "DEBUG=gateway:* nodemon test.js"
   },
   "author": "Quinten Coltof",
   "license": "ISC",

@@ -13,12 +13,6 @@ export type Route = {
   arch: Architecture
 };
 
-// type Condition = {
-//   parameter: string
-//   condition: string
-//   value: any
-// };
-
 type CompiledRoutes = {
   [method: string]: {
     [path: string]: {
@@ -34,33 +28,40 @@ class Server {
   private server: http.Server
   private openRequests: { [id: number]: Response }
 
-  private routes: CompiledRoutes
+  private routes: CompiledRoutes = {}
 
-  constructor(port: number, routes: Route[]) {
+  constructor(port: number, arch: Architecture, routes: Route[]) {
     this.port = port;
     this.openRequests = {};
 
-    this.loadRoutes(routes);
+    this.loadRoutes(arch, routes);
     this.createApp();
     this.createServer();
   }
 
-  public loadRoutes = (routes: Route[]) => {
-    const compiledRoutes: CompiledRoutes = {};
+  public loadRoutes = (arch: Architecture, routes: Route[]) => {
     for (const route of routes) {
-      const method = route.method || 'get';
-      if (!(method in compiledRoutes)) {
-        compiledRoutes[method] = {};
+      const method = (route.method || 'GET').toUpperCase();
+      if (!(method in this.routes)) {
+        this.routes[method] = {};
       }
 
-      compiledRoutes[method][route.path] = {
+      this.routes[method][route.path] = {
         params: route.params,
-        arch: route.arch,
+        arch: arch,
       }
     }
-
-    this.routes = compiledRoutes;
   };
+
+  public unloadArch = (arch: Architecture) => {
+    for (const method in this.routes) {
+      for (const path in this.routes[method]) {
+        if (this.routes[method][path].arch === arch) {
+          delete this.routes[method][path];
+        }
+      }
+    }
+  }
 
   private parseValue = (type: string, value: any) => {
     switch (type) {
@@ -89,11 +90,11 @@ class Server {
 
     const params = {};
     for (const param in route.params) {
-      if (!(param in req.params)) { next(); return; }
+      if (!(param in req.query)) { next({ status: 400, message: `Missing parameter "${param}".`}); return; }
       const paramConf = route.params[param];
 
-      params[param] = this.parseValue(paramConf.type, req.params.param);
-      if (!params[param]) { next(); return; }
+      params[param] = this.parseValue(paramConf.type, req.query[param]);
+      if (!params[param]) { next({ status: 400, message: `Parameter "${param}" does not have type "${paramConf.type}".` }); return; }
     }
 
     const reqId = route.arch.run(params);
