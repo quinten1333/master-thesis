@@ -1,0 +1,13 @@
+name: x*30/30+5-5%1000
+endpoint: amqp://rabbitmq
+
+userStories:
+- given: a http get request with path "/" on port 3000 with parameter "input" which is of type "numeric"
+  then:
+  - unpack "input"
+  - times 30
+  - devide by 30
+  - plus 5
+  - minus 5
+  - modulo 1000
+  - respond to the http request on port 3000

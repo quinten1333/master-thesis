@@ -28,9 +28,13 @@ class TextAnalyser:
   def lemmatize(self, tokens):
       return [(self.lemmatizer.lemmatize(token[0], pos=self.tag_map[token[1]]), token[1]) for token in tokens]
 
-  def tokenize(self, sentence):
+  def tokenize(self, sentence, tagged=False):
       tokens = [word for word in word_tokenize(sentence) if word.casefold() not in self.stop_words]
-      return self.lemmatize(nltk.pos_tag(tokens))
+      tokens = self.lemmatize(nltk.pos_tag(tokens))
+      if not tagged:
+         tokens = [token[0] for token in tokens]
+
+      return tokens
 
   def tokenizeMultiSentence(self, sentences):
       return [self.tokenize(sentence) for sentence in sent_tokenize(sentences)]
