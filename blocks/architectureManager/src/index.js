@@ -22,8 +22,8 @@ const conn = new AMQPConn(config.endpoint);
 
 let archId = -1;
 const architectures = {
-  [-1]: new Architecture(conn, -1, 'Testing', yaml.load(`- block: gateway\n  fn: listen\n  extraArgs:\n  - port: 3000\n- block: plus\n  fn: plus\n  extraArgs:\n  - 2\n- block: min\n  fn: min\n  extraArgs:\n  - 10\n- block: gateway\n  fn: reply\n  extraArgs:\n  - port: 3000`), 'amqp://rabbitmq'),
-  [-2]: new Architecture(conn, -2, 'Testing mul, div, plus, min', yaml.load(`- block: gateway\n  fn: listen\n  extraArgs:\n  - port: 3000\n- block: mul\n  fn: mul\n  extraArgs:\n  - 30\n- block: div\n  fn: div\n  extraArgs:\n  - 30\n- block: plus\n  fn: plus\n  extraArgs:\n  - 5\n- block: min\n  fn: min\n  extraArgs:\n  - 5\n- block: gateway\n  fn: reply\n  extraArgs:\n  - port: 3000`), 'amqp://rabbitmq'),
+  [-1]: new Architecture(conn, -1, 'Testing', yaml.load(`- block: gateway\n  fn: listen\n  extraArgs:\n  - port: 3000\n    routes:\n    - method: get\n      path: /\n      params:\n        params:\n          type: number\n- block: util\n  fn: unpack\n  extraArgs:\n  - params\n- block: plus\n  fn: plus\n  extraArgs:\n  - 2\n- block: min\n  fn: min\n  extraArgs:\n  - 10\n- block: gateway\n  fn: reply\n  extraArgs:\n  - port: 3000`), 'amqp://rabbitmq'),
+  [-2]: new Architecture(conn, -2, 'Testing mul, div, plus, min', yaml.load(`- block: gateway\n  fn: listen\n  extraArgs:\n  - port: 3000\n    routes:\n    - method: get\n      path: /\n      params:\n        params:\n          type: number\n- block: util\n  fn: unpack\n  extraArgs:\n  - params\n- block: mul\n  fn: mul\n  extraArgs:\n  - 30\n- block: div\n  fn: div\n  extraArgs:\n  - 30\n- block: plus\n  fn: plus\n  extraArgs:\n  - 5\n- block: min\n  fn: min\n  extraArgs:\n  - 5\n- block: gateway\n  fn: reply\n  extraArgs:\n  - port: 3000`), 'amqp://rabbitmq'),
 };
 
 const createApp = (port) => {
