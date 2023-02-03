@@ -12,13 +12,12 @@ io.register('reply', ({ reqId, input }, args: { port: number }) => {
 
 io.register('listen', ({ arch, start }, args: { port: number, routes: Route[] }) => {
   const { port, routes } = args;
-  routes.forEach((route) => { route.arch = arch });
 
   if (start) {
     if (port in servers) {
-      servers[port].loadRoutes(routes);
+      servers[port].loadRoutes(arch, routes);
     } else {
-      servers[port] = new Server(port, routes);
+      servers[port] = new Server(port, arch, routes);
     }
   } else {
     servers[port].close();
