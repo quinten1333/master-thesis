@@ -90,3 +90,14 @@ services:
     environment:
       IOConfig: '{ "archEndpoint": "amqp://rabbitmq", "archExchange": "arch-management-plus" }'
       DEBUG: 'messaging'
+
+  util:
+    image: node:latest
+    entrypoint: npm run dev
+    working_dir: /app
+    volumes:
+      - ./blocks/util/:/app
+      - ./libs:/app/node_modules/@amicopo
+    environment:
+      IOConfig: '{ "archEndpoint": "amqp://rabbitmq", "archExchange": "arch-management-util" }'
+      DEBUG: 'messaging'

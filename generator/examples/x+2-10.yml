@@ -7,6 +7,16 @@ steps:
   fn: listen
   extraArgs:
   - port: 3000
+    routes:
+    - method: get
+      path: /
+      params:
+        params:
+          type: number
+- block: util
+  fn: unpack
+  extraArgs:
+  - params
 - block: plus
   fn: plus
   extraArgs:
