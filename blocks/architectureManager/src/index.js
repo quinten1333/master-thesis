@@ -39,8 +39,7 @@ const createApp = (port) => {
   app.set('view engine', 'pug')
   app.set('views', 'src/views')
 
-  app.get('/', (req, res) => { res.render('index'); });
-  app.get('/architecture', (req, res) => { res.render('architecture', { architectures })});
+  app.get('/', (req, res) => { res.render('index', { architectures }); });
   app.get('/architecture/:archId/active', async (req, res, next) => {
     const { archId } = req.params;
     const { active } = req.query;
@@ -56,7 +55,7 @@ const createApp = (port) => {
       return;
     }
 
-    res.redirect('/architecture');
+    res.redirect('/');
   });
 
   app.get('/architecture/:archId/io', (req, res) => {
@@ -70,7 +69,7 @@ const createApp = (port) => {
     const newId = ++archId;
     architectures[archId] = new Architecture(conn, newId, req.body.name, yaml.load(req.body.steps), req.body.endpoint);
 
-    res.render('architecture', { architectures });
+    res.redirect('/');
   });
 
   // catch 404 and forward to error handler
