@@ -4,20 +4,20 @@ import http from 'node:http';
 import debugLib from 'debug';
 const debug = debugLib('gateway:app');
 
-type Architecture = any;
+type Pipeline = any;
 
 export type Route = {
   method?: string
   path: string
   params: { [name: string]: { type: string } }
-  arch: Architecture
+  pipeline: Pipeline
 };
 
 type CompiledRoutes = {
   [method: string]: {
     [path: string]: {
       params: { [name: string]: { type: string } }
-      arch: Architecture
+      pipeline: Pipeline
     }
   }
 };
@@ -30,16 +30,16 @@ class Server {
 
   private routes: CompiledRoutes = {}
 
-  constructor(port: number, arch: Architecture, routes: Route[]) {
+  constructor(port: number, pipeline: Pipeline, routes: Route[]) {
     this.port = port;
     this.openRequests = {};
 
-    this.loadRoutes(arch, routes);
+    this.loadRoutes(pipeline, routes);
     this.createApp();
     this.createServer();
   }
 
-  public loadRoutes = (arch: Architecture, routes: Route[]) => {
+  public loadRoutes = (pipeline: Pipeline, routes: Route[]) => {
     for (const route of routes) {
       const method = (route.method || 'GET').toUpperCase();
       if (!(method in this.routes)) {
@@ -48,19 +48,27 @@ class Server {
 
       this.routes[method][route.path] = {
         params: route.params,
-        arch: arch,
+        pipeline: pipeline,
       }
     }
   };
 
-  public unloadArch = (arch: Architecture) => {
+  public unloadPipeline = (pipeline: Pipeline) => {
     for (const method in this.routes) {
       for (const path in this.routes[method]) {
-        if (this.routes[method][path].arch === arch) {
+        if (this.routes[method][path].pipeline === pipeline) {
           delete this.routes[method][path];
         }
       }
+
+      if (Object.keys(this.routes[method]).length === 0) {
+        delete this.routes[method];
+      }
     }
+  }
+
+  public hasRoutes = () => {
+    return Object.keys(this.routes).length > 0;
   }
 
   private parseValue = (type: string, value: any) => {
@@ -97,7 +105,7 @@ class Server {
       if (!params[param]) { next({ status: 400, message: `Parameter "${param}" does not have type "${paramConf.type}".` }); return; }
     }
 
-    const reqId = route.arch.run(params);
+    const reqId = route.pipeline.run(params);
     this.openRequests[reqId] = res;
   }
 

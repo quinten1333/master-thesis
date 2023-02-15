@@ -10,18 +10,21 @@ io.register('reply', ({ reqId, input }, args: { port: number }) => {
   servers[args.port].respond(reqId, input);
 });
 
-io.register('listen', ({ arch, start }, args: { port: number, routes: Route[] }) => {
+io.register('listen', ({ pipeline, start }, args: { port: number, routes: Route[] }) => {
   const { port, routes } = args;
 
   if (start) {
     if (port in servers) {
-      servers[port].loadRoutes(arch, routes);
+      servers[port].loadRoutes(pipeline, routes);
     } else {
-      servers[port] = new Server(port, arch, routes);
+      servers[port] = new Server(port, pipeline, routes);
     }
   } else {
-    servers[port].close();
-    delete servers[port];
+    servers[port].unloadPipeline(pipeline);
+    if (!servers[port].hasRoutes()) {
+      servers[port].close();
+      delete servers[port];
+    }
   }
 });
 
