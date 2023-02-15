@@ -93,20 +93,64 @@ class MSAArchitecture {
 
     this.started = false;
     this.conn = null;
+
+    this.pipelines = [];
+  }
+
+  validateIO() {
+    if (!this.pipeIO.endpoint) {
+      throw new Error(`Endpoint of architecture missing!`);
+    }
+
+    if (!this.pipeIO.pipelines) {
+      throw new Error('Pipelines of architecture missing!');
+    }
+  }
+
+  start = async () => {
+    if (this.started) {
+      throw new Error('You cannot start an architecture twice!');
+    }
+    this.started = true;
+
+    this.conn = new AMQPConn(this.archIO.endpoint);
+    await this.conn.connect();
+
+    for (const pipeId in this.archIO.pipelines) {
+      const pipeline = new MSAPipeline(this.archIO.pipelines[pipeId], this.functions, this.conn);
+      await pipeline.start();
+      this.pipelines.push(pipeline);
+    }
+  }
+
+  stop = async () => {
+    for (const pipeline of this.pipelines) {
+      await pipeline.stop();
+    }
+
+    await this.conn.disconnect();
+    this.conn = null;
+    this.started = false;
+  }
+}
+
+class MSAPipeline {
+  constructor(pipeIO, functions, conn) {
+    this.pipeIO = pipeIO;
+    this.functions = functions;
+    this.conn = conn;
+
+    this.started = false;
     this.reqIdCounter = 0;
 
     // Contains the config of step '0' if present.
     this.initialStep = null;
-    this.validateIO(this.archIO);
+    this.validateIO();
   }
 
-  validateIO(archIO) {
-    if (!archIO.endpoint) {
-      throw new Error(`Endpoint of architecture missing!`);
-    }
-
-    for (const queue in archIO.queues) {
-      const queueConfig = archIO.queues[queue];
+  validateIO() {
+    for (const queue in this.pipeIO.queues) {
+      const queueConfig = this.pipeIO.queues[queue];
 
       for (const step in queueConfig.steps) {
         const stepConfig = queueConfig.steps[step];
@@ -145,7 +189,7 @@ class MSAArchitecture {
       let output;
       debug('Executing function %s with input %s', stepConfig.fnName, data.input);
       try {
-        output = this.functions[stepConfig.fnName]({...data, arch: this }, ...stepConfig.extraArgs);
+        output = this.functions[stepConfig.fnName]({...data, pipeline: this }, ...stepConfig.extraArgs);
       } catch (err) {
         this.handleError(data, err);
         return;
@@ -160,31 +204,26 @@ class MSAArchitecture {
 
   start = async () => {
     if (this.started) {
-      throw new Error('You cannot start an architecture twice!');
+      throw new Error('You cannot start a pipeline twice!');
     }
     this.started = true;
 
-    this.conn = new AMQPConn(this.archIO.endpoint); // TODO: One connection per node instead of per arch
-    await this.conn.connect();
-
-    for (const queue in this.archIO.queues) {
-      const queueConfig = this.archIO.queues[queue];
+    for (const queue in this.pipeIO.queues) {
+      const queueConfig = this.pipeIO.queues[queue];
       this.conn.receive(queue, this.genReceive(queueConfig));
     }
 
 
     if (this.initialStep) {
-      this.functions[this.initialStep.fnName]({ arch: this, start: true }, ...this.initialStep.extraArgs);
+      await this.functions[this.initialStep.fnName]({ pipeline: this, start: true }, ...this.initialStep.extraArgs);
     }
   }
 
   stop = async () => {
-    await this.conn.disconnect();
-    this.conn = null;
     this.started = false;
 
     if (this.initialStep) {
-      this.functions[this.initialStep.fnName]({ arch: this, start: false }, ...this.initialStep.extraArgs);
+      await this.functions[this.initialStep.fnName]({ pipeline: this, start: false }, ...this.initialStep.extraArgs);
     }
   }
 
