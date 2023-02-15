@@ -38,63 +38,15 @@ services:
       DEBUG: 'gateway:*,messaging'
       DEBUG_COLORS: true
 
-  div:
+  filesystem:
     image: node:latest
     entrypoint: npm run dev
     working_dir: /app
     volumes:
-      - ./blocks/div/:/app
+      - ./blocks/filesystem/:/app
       - ./libs:/app/node_modules/@amicopo
     environment:
-      IOConfig: '{ "archEndpoint": "amqp://rabbitmq", "archExchange": "arch-management-div" }'
-      DEBUG: 'messaging'
-      DEBUG_COLORS: true
-
-  min:
-    image: node:latest
-    entrypoint: npm run dev
-    working_dir: /app
-    volumes:
-      - ./blocks/min/:/app
-      - ./libs:/app/node_modules/@amicopo
-    environment:
-      IOConfig: '{ "archEndpoint": "amqp://rabbitmq", "archExchange": "arch-management-min" }'
-      DEBUG: 'messaging'
-      DEBUG_COLORS: true
-
-  mod:
-    image: node:latest
-    entrypoint: npm run dev
-    working_dir: /app
-    volumes:
-      - ./blocks/mod/:/app
-      - ./libs:/app/node_modules/@amicopo
-    environment:
-      IOConfig: '{ "archEndpoint": "amqp://rabbitmq", "archExchange": "arch-management-mod" }'
-      DEBUG: 'messaging'
-      DEBUG_COLORS: true
-
-  mul:
-    image: node:latest
-    entrypoint: npm run dev
-    working_dir: /app
-    volumes:
-      - ./blocks/mul/:/app
-      - ./libs:/app/node_modules/@amicopo
-    environment:
-      IOConfig: '{ "archEndpoint": "amqp://rabbitmq", "archExchange": "arch-management-mul" }'
-      DEBUG: 'messaging'
-      DEBUG_COLORS: true
-
-  plus:
-    image: node:latest
-    entrypoint: npm run dev
-    working_dir: /app
-    volumes:
-      - ./blocks/plus/:/app
-      - ./libs:/app/node_modules/@amicopo
-    environment:
-      IOConfig: '{ "archEndpoint": "amqp://rabbitmq", "archExchange": "arch-management-plus" }'
+      IOConfig: '{ "archEndpoint": "amqp://rabbitmq", "archExchange": "arch-management-filesystem" }'
       DEBUG: 'messaging'
       DEBUG_COLORS: true
 
