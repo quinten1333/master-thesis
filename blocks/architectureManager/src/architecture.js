@@ -1,51 +1,62 @@
 export default class Architecture {
-  constructor(conn, id, name, steps, endpoint) {
+  constructor(conn, id, name, pipelines, endpoint) {
     this.conn = conn;
 
     this.id = id;
     this.name = name;
-    this.steps = steps;
+    this.pipelines = pipelines;
     this.endpoint = endpoint;
 
     this.IOConfig = this.generateIOConfig();
   }
 
-  namespace(str) {
-    return `arch-${this.id}-${str}`
+  namespace(pipeId, str) {
+    return `arch-${this.id}-${pipeId}-${str}`
   }
 
   generateIOConfig = () => {
     const result = {};
 
-    for (let step in this.steps) {
-      step = parseInt(step);
-      const stepConfig = this.steps[step];
+    for (const pipeId in this.pipelines) {
+      const steps = this.pipelines[pipeId].steps;
 
-      if (!stepConfig.block) {
-        throw new Error(`Required parameter block missing on step ${step}!`);
-      }
+      for (let step in steps) {
+        step = parseInt(step);
+        const stepConfig = steps[step];
 
-      if (!(stepConfig.block in result)) {
-        result[stepConfig.block] = {
-          endpoint: this.endpoint,
-          queues: {}
+        if (!stepConfig.block) {
+          throw new Error(`Required parameter block missing on step ${step}!`);
         }
-      }
 
-      const blockConfig = result[stepConfig.block];
-      const namespacedQueue = this.namespace(stepConfig.block);
-      if (!blockConfig.queues[namespacedQueue]) {
-        blockConfig.queues[namespacedQueue] = {
-          steps: {},
-        };
-      }
+        if (!(stepConfig.block in result)) {
+          result[stepConfig.block] = {
+            endpoint: this.endpoint,
+            pipelines: {}
+          }
+        }
 
-      blockConfig.queues[namespacedQueue].steps[step] = {
-        fnName: stepConfig.fn,
-        extraArgs: stepConfig.extraArgs || [],
-        ...(this.steps.length - 1 !== step ? {
-          outQueue: this.namespace(this.steps[step + 1].block)
-        } : {}),
+        const blockConfig = result[stepConfig.block];
+        if (!blockConfig.pipelines[pipeId]) {
+          blockConfig.pipelines[pipeId] = {
+            queues: {},
+          };
+        }
+        const pipeConfig = blockConfig.pipelines[pipeId];
+
+        const namespacedQueue = this.namespace(pipeId, stepConfig.block);
+        if (!pipeConfig.queues[namespacedQueue]) {
+          pipeConfig.queues[namespacedQueue] = {
+            steps: {},
+          };
+        }
+
+        pipeConfig.queues[namespacedQueue].steps[step] = {
+          fnName: stepConfig.fn,
+          extraArgs: stepConfig.extraArgs || [],
+          ...(steps.length - 1 !== step ? {
+            outQueue: this.namespace(pipeId, steps[step + 1].block)
+          } : {}),
+        }
       }
     }
     return result;

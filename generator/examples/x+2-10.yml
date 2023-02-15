@@ -2,33 +2,53 @@
 name: x + 2 - 10
 # mode: optimized
 endpoint: amqp://rabbitmq
-steps:
-- block: gateway
-  fn: listen
-  extraArgs:
-  - port: 3000
-    routes:
-    - method: get
-      path: /
-      params:
+pipelines:
+- steps:
+  - block: gateway
+    fn: listen
+    extraArgs:
+    - port: 3000
+      routes:
+      - method: get
+        path: /
         params:
-          type: number
-- block: util
-  fn: unpack
-  extraArgs:
-  - params
-- block: plus
-  fn: plus
-  extraArgs:
-  - 2
-- block: min
-  fn: min
-  extraArgs:
-  - 10
-- block: gateway
-  fn: reply
-  extraArgs:
-  - port: 3000
+          params:
+            type: number
+  - block: util
+    fn: unpack
+    extraArgs:
+    - params
+  - block: plus
+    fn: plus
+    extraArgs:
+    - 2
+  - block: min
+    fn: min
+    extraArgs:
+    - 10
+  - block: gateway
+    fn: reply
+    extraArgs:
+    - port: 3000
+- steps:
+  - block: gateway
+    fn: listen
+    extraArgs:
+    - port: 3000
+      routes:
+      - method: get
+        path: /identity
+        params:
+          params:
+            type: number
+  - block: util
+    fn: unpack
+    extraArgs:
+    - params
+  - block: gateway
+    fn: reply
+    extraArgs:
+    - port: 3000
 
 extraServices:
   rabbitmq:

@@ -29,5 +29,5 @@ html(lang="en")
       form(method="post", action="/architecture")
         input.form-control(type="text", name="name", placeholder="Architecture name")
         input.form-control(type="text", name="endpoint", value="amqp://rabbitmq")
-        textarea.form-control(name="steps", rows="10", placeholder="list of steps in YAML")
+        textarea.form-control(name="pipelines", rows="10", placeholder="list of pipelines in YAML")
         button.btn.btn-primary(type="submit") create
