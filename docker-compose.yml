@@ -22,6 +22,7 @@ services:
       PORT: 80
       IOConfig: '{ "endpoint": "amqp://rabbitmq" }'
       DEBUG: architectureManager, messaging
+      DEBUG_COLORS: true
 
   gateway:
     image: node:latest
@@ -35,6 +36,7 @@ services:
     environment:
       IOConfig: '{ "archEndpoint": "amqp://rabbitmq", "archExchange": "arch-management-gateway" }'
       DEBUG: 'gateway:*,messaging'
+      DEBUG_COLORS: true
 
   div:
     image: node:latest
@@ -46,6 +48,7 @@ services:
     environment:
       IOConfig: '{ "archEndpoint": "amqp://rabbitmq", "archExchange": "arch-management-div" }'
       DEBUG: 'messaging'
+      DEBUG_COLORS: true
 
   min:
     image: node:latest
@@ -57,6 +60,7 @@ services:
     environment:
       IOConfig: '{ "archEndpoint": "amqp://rabbitmq", "archExchange": "arch-management-min" }'
       DEBUG: 'messaging'
+      DEBUG_COLORS: true
 
   mod:
     image: node:latest
@@ -68,6 +72,7 @@ services:
     environment:
       IOConfig: '{ "archEndpoint": "amqp://rabbitmq", "archExchange": "arch-management-mod" }'
       DEBUG: 'messaging'
+      DEBUG_COLORS: true
 
   mul:
     image: node:latest
@@ -79,6 +84,7 @@ services:
     environment:
       IOConfig: '{ "archEndpoint": "amqp://rabbitmq", "archExchange": "arch-management-mul" }'
       DEBUG: 'messaging'
+      DEBUG_COLORS: true
 
   plus:
     image: node:latest
@@ -90,6 +96,7 @@ services:
     environment:
       IOConfig: '{ "archEndpoint": "amqp://rabbitmq", "archExchange": "arch-management-plus" }'
       DEBUG: 'messaging'
+      DEBUG_COLORS: true
 
   util:
     image: node:latest
@@ -101,3 +108,4 @@ services:
     environment:
       IOConfig: '{ "archEndpoint": "amqp://rabbitmq", "archExchange": "arch-management-util" }'
       DEBUG: 'messaging'
+      DEBUG_COLORS: true
