@@ -27,7 +27,5 @@ html(lang="en")
 
       h5 Create new architecture
       form(method="post", action="/architecture")
-        input.form-control(type="text", name="name", placeholder="Architecture name")
-        input.form-control(type="text", name="endpoint", value="amqp://rabbitmq")
-        textarea.form-control(name="pipelines", rows="10", placeholder="list of pipelines in YAML")
+        textarea.form-control(name="yaml", rows="10", placeholder="YAML")
         button.btn.btn-primary(type="submit") create

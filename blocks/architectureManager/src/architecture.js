@@ -1,9 +1,10 @@
 export default class Architecture {
-  constructor(conn, id, name, pipelines, endpoint) {
+  constructor(conn, id, name, datasets, pipelines, endpoint) {
     this.conn = conn;
 
     this.id = id;
     this.name = name;
+    this.datasets = datasets;
     this.pipelines = pipelines;
     this.endpoint = endpoint;
 
