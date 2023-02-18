@@ -28,5 +28,5 @@ gatewayConf.register(Story("parameter `` (.*?) '' of type `` (.*?) ''", lambda c
 
 stories = [
   gatewayConf,
-  Story("^respond http request port (\d+)", lambda config, match, port: { 'block': 'gateway', 'fn': 'reply', 'extraArgs': [{ 'port': port }] })
+  Story("^respond http request port (\d+)", lambda config, match, port: { 'block': 'gateway', 'fn': 'reply', 'extraArgs': [{ 'port': port }] }), #TODO: Remove the need to supply the port using the context
 ]

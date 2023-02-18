@@ -52,7 +52,7 @@ export default class Architecture {
         }
 
         pipeConfig.queues[namespacedQueue].steps[step] = {
-          fnName: stepConfig.fn,
+          ...stepConfig,
           extraArgs: stepConfig.extraArgs || [],
           ...(steps.length - 1 !== step ? {
             outQueue: this.namespace(pipeId, steps[step + 1].block)

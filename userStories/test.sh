@@ -1,1 +1,12 @@
-python src/main.py 'given a http get request on port 3000 with parameter "input" which is of type "numeric"'
+echo "reboot" > ../libs/msamessaging/reboot.js
+
+python src/main.py thesisfairPlatform.yml $@
+
+curl -X POST --data-urlencode "yaml=$(cat thesisfairPlatform.yml-compiled.yml | sed "s/\"/'/g")" localhost:3001/architecture
+echo
+curl localhost:3001/architecture/0/active?active=true
+echo
+
+sleep 0.1
+curl http://localhost:3000/user/login?username=quinten
+echo

@@ -16,6 +16,10 @@ io.register('pack', ({ input }, key) => ({ [key]: input }));
 // Array
 io.register('select', ({ input }, i) => input[i]);
 
+// State
+io.register('set', (_, value) => value)
+
+// Debugging
 io.register('log', ({ input }) => {
   console.log(input);
   return input;

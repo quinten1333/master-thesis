@@ -1,5 +1,7 @@
 **/node_modules/**
 **/built/**
+reboot.js
+*-compiled.yml
 
 **/__pycache__/**
 
