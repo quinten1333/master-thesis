@@ -179,7 +179,7 @@ class MSAPipeline {
   }
 
   genReceive(queueConfig) {
-    return (data) => {
+    return async (data) => {
       const stepConfig = queueConfig.steps[data.step];
       if (!stepConfig) {
         console.error(`Received unconfigured step "${data.step}"`);
@@ -189,7 +189,7 @@ class MSAPipeline {
       let output;
       debug('Executing function %s with input %s', stepConfig.fnName, data.input);
       try {
-        output = this.functions[stepConfig.fnName]({...data, pipeline: this }, ...stepConfig.extraArgs);
+        output = await this.functions[stepConfig.fnName]({...data, pipeline: this }, ...stepConfig.extraArgs);
       } catch (err) {
         this.handleError(data, err);
         return;
