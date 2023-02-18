@@ -1,0 +1,107 @@
+{
+  "gateway": [
+    {
+      "endpoint": "amqp://rabbitmq",
+      "queues": {
+        "gateway": {
+          "steps": {
+            "0": {
+              "fnName": "listen",
+              "extraArgs": [
+                {
+                  "port": 3000
+                }
+              ],
+              "outId": 0,
+              "outQueue": "mul"
+            },
+            "5": {
+              "fnName": "reply",
+              "extraArgs": [
+                {
+                  "port": 3000
+                }
+              ]
+            }
+          }
+        }
+      }
+    }
+  ],
+  "mul": [
+    {
+      "endpoint": "amqp://rabbitmq",
+      "queues": {
+        "mul": {
+          "steps": {
+            "1": {
+              "fnName": "mul",
+              "extraArgs": [
+                30
+              ],
+              "outId": 0,
+              "outQueue": "div"
+            }
+          }
+        }
+      }
+    }
+  ],
+  "div": [
+    {
+      "endpoint": "amqp://rabbitmq",
+      "queues": {
+        "div": {
+          "steps": {
+            "2": {
+              "fnName": "div",
+              "extraArgs": [
+                30
+              ],
+              "outId": 0,
+              "outQueue": "plus"
+            }
+          }
+        }
+      }
+    }
+  ],
+  "plus": [
+    {
+      "endpoint": "amqp://rabbitmq",
+      "queues": {
+        "plus": {
+          "steps": {
+            "3": {
+              "fnName": "plus",
+              "extraArgs": [
+                5
+              ],
+              "outId": 0,
+              "outQueue": "min"
+            }
+          }
+        }
+      }
+    }
+  ],
+  "min": [
+    {
+      "endpoint": "amqp://rabbitmq",
+      "queues": {
+        "min": {
+          "steps": {
+            "4": {
+              "fnName": "min",
+              "extraArgs": [
+                5
+              ],
+              "outId": 0,
+              "outQueue": "gateway"
+            }
+          }
+        }
+      }
+    }
+  ]
+}

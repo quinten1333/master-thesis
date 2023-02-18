@@ -1,0 +1,31 @@
+version: '3'
+services:
+  rabbitmq:
+    image: rabbitmq:3-management
+  gateway:
+    image: ghcr.io/quinten1333/mt-blocks:gateway
+    ports:
+      - '3000:3000'
+    environment:
+      IOConfig: >-
+        [{"endpoint":"amqp://rabbitmq","queues":{"gateway":{"steps":{"0":{"fnName":"listen","extraArgs":[{"port":3000}],"outId":0,"outQueue":"mul"},"5":{"fnName":"reply","extraArgs":[{"port":3000}]}}}}}]
+  mul:
+    image: ghcr.io/quinten1333/mt-blocks:mul
+    environment:
+      IOConfig: >-
+        [{"endpoint":"amqp://rabbitmq","queues":{"mul":{"steps":{"1":{"fnName":"mul","extraArgs":[30],"outId":0,"outQueue":"div"}}}}}]
+  div:
+    image: ghcr.io/quinten1333/mt-blocks:div
+    environment:
+      IOConfig: >-
+        [{"endpoint":"amqp://rabbitmq","queues":{"div":{"steps":{"2":{"fnName":"div","extraArgs":[30],"outId":0,"outQueue":"plus"}}}}}]
+  plus:
+    image: ghcr.io/quinten1333/mt-blocks:plus
+    environment:
+      IOConfig: >-
+        [{"endpoint":"amqp://rabbitmq","queues":{"plus":{"steps":{"3":{"fnName":"plus","extraArgs":[5],"outId":0,"outQueue":"min"}}}}}]
+  min:
+    image: ghcr.io/quinten1333/mt-blocks:min
+    environment:
+      IOConfig: >-
+        [{"endpoint":"amqp://rabbitmq","queues":{"min":{"steps":{"4":{"fnName":"min","extraArgs":[5],"outId":0,"outQueue":"gateway"}}}}}]

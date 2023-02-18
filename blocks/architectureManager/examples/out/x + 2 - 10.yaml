@@ -1,0 +1,21 @@
+version: '3'
+services:
+  rabbitmq:
+    image: rabbitmq:3-management
+  gateway:
+    image: ghcr.io/quinten1333/mt-blocks:gateway
+    ports:
+      - '3000:3000'
+    environment:
+      IOConfig: >-
+        [{"endpoint":"amqp://rabbitmq","queues":{"gateway":{"steps":{"0":{"fnName":"listen","extraArgs":[{"port":3000}],"outId":0,"outQueue":"plus"},"3":{"fnName":"reply","extraArgs":[{"port":3000}]}}}}}]
+  plus:
+    image: ghcr.io/quinten1333/mt-blocks:plus
+    environment:
+      IOConfig: >-
+        [{"endpoint":"amqp://rabbitmq","queues":{"plus":{"steps":{"1":{"fnName":"plus","extraArgs":[2],"outId":0,"outQueue":"min"}}}}}]
+  min:
+    image: ghcr.io/quinten1333/mt-blocks:min
+    environment:
+      IOConfig: >-
+        [{"endpoint":"amqp://rabbitmq","queues":{"min":{"steps":{"2":{"fnName":"min","extraArgs":[10],"outId":0,"outQueue":"gateway"}}}}}]
