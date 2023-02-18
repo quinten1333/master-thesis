@@ -38,6 +38,18 @@ services:
       DEBUG: 'gateway:*,messaging'
       DEBUG_COLORS: true
 
+  mongodb:
+    image: node:latest
+    entrypoint: npm run dev
+    working_dir: /app
+    volumes:
+      - ./blocks/mongodb/:/app
+      - ./libs:/app/node_modules/@amicopo
+    environment:
+      IOConfig: '{ "archEndpoint": "amqp://rabbitmq", "archExchange": "arch-management-mongodb" }'
+      DEBUG: 'mongodb:*,messaging'
+      DEBUG_COLORS: true
+
   filesystem:
     image: node:latest
     entrypoint: npm run dev
@@ -61,3 +73,8 @@ services:
       IOConfig: '{ "archEndpoint": "amqp://rabbitmq", "archExchange": "arch-management-util" }'
       DEBUG: 'messaging'
       DEBUG_COLORS: true
+
+  dataset-mongodb:
+    image: mongo
+    ports:
+      - 27017:27017
