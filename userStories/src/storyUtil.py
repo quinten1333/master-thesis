@@ -75,26 +75,23 @@ def normalizeStory(userStory):
 
 
 def tokenizeStory(userStory):
-  def _tokenizeStory(userStory):
-    def _tokenizeStep(step):
-      if 'op' in step: # Ignore op steps
-        return step
+  def _tokenizeStep(step):
+    if 'op' in step: # Ignore op steps
+      return step
 
-      if 'condition' in step:
-        return _tokenizeStory(step)
-
-      return {
-        **step,
-        'do': ' '.join(textAnalyser.tokenize(step['do'])),
-      }
+    if 'condition' in step:
+      return tokenizeStory(step)
 
     return {
-      'condition': _tokenizeStep(userStory['condition']),
-      'steps': lmap(_tokenizeStep, userStory['steps']),
+      **step,
+      'do': ' '.join(textAnalyser.tokenize(step['do'])),
     }
 
-  story = _tokenizeStory(userStory)
-  return [story['condition'], *story['steps']]
+  return {
+    'condition': _tokenizeStep(userStory['condition']),
+    'steps': lmap(_tokenizeStep, userStory['steps']),
+  }
+
 
 
 def findMatchingStory(inputStory):

@@ -63,8 +63,13 @@ def validateStory(userStory):
         for childStep in step['steps']:
           check_step(childStep)
 
+  if 'condition' not in userStory:
+    raise BaseException('User story missing condition in given')
+
+  if 'steps' not in userStory:
+    raise BaseException('User story missing steps in then')
+
   for step in userStory['steps']:
-    print(step)
     check_step(step)
 
 
@@ -222,9 +227,9 @@ if __name__ == "__main__":
   if command == 'validated': printNormalStories(normalStories); print('validated'); exit(0)
 
   tokenizedStories = [tokenizeStory(userStory) for userStory in normalStories]
-  if command == 'tokenized': printStories(tokenizedStories); exit(0)
+  if command == 'tokenized': printNormalStories(tokenizedStories); exit(0)
 
-  flattenedStories = [flattenStory(userStory) for userStory in tokenizedStories]
+  flattenedStories = [flattenStory([userStory['condition'], *userStory['steps']]) for userStory in tokenizedStories]
   if command == 'flattened': printStoriesDict(flattenedStories); exit(0)
 
   cfgStories = [cleanupCFG(controllFlowGraphKeywords(flattenedStory)) for flattenedStory in flattenedStories]
