@@ -1,18 +1,19 @@
 import sys
 import yaml
 import json
+from collections import defaultdict
 
 from Context import context
 from storyUtil import normalizeStory, tokenizeStory, findMatchingStory
 
-def printStories(userStories):
+def printStories(userStories: list):
   for story in userStories:
     for i, step in enumerate(story):
       print(i, '-', step)
     print()
   exit(0)
 
-def printStoriesFlattened(userStories):
+def printStoriesDict(userStories: dict):
   for storyDict in userStories:
     for stepId in storyDict:
       print(stepId, '-', storyDict[stepId])
@@ -45,7 +46,7 @@ def handleInput():
 
   return [doc, command]
 
-def flattenStory(userStory: list, stepOffset=0) -> dict:
+def flattenStory(userStory: list, stepOffset=0) -> dict: # TOOD: Add stop and goto
   """
     Make a proper graph from the stories.
     This is done by doing two passes. First resolving the local graph which will
@@ -57,6 +58,8 @@ def flattenStory(userStory: list, stepOffset=0) -> dict:
   """
   stepsDict = {i + stepOffset: step for i, step in enumerate(userStory)}
   steps = len(userStory) + stepOffset
+
+  # Add offset to goto statements
 
   def getConditionsAhead(startId, firstPass=True):
     """
@@ -96,8 +99,7 @@ def flattenStory(userStory: list, stepOffset=0) -> dict:
 
     return conditions
 
-  for stepId in stepsDict:
-    step = stepsDict[stepId];
+  for stepId, step in stepsDict.items():
     if stepId == steps - 1:
       continue
 
@@ -117,10 +119,53 @@ def flattenStory(userStory: list, stepOffset=0) -> dict:
 
   return stepsDict
 
-def parseStory(flattenedStory):
+def getTargets(story: dict) -> list:
+  targets = []
+  if 'outStep' in story: targets.append(story)
+  if 'outCondition' in story: targets.extend(story['outCondition'])
+
+  return targets
+
+def controllFlowGraphKeywords(flattenedStory: dict) -> dict:
+  for story in flattenedStory.values():
+    for cond in getTargets(story):
+      target = flattenedStory[cond['outStep']]
+
+      if 'op' in target:
+        if target['op'] == 'stop':
+          del cond['outStep']
+        elif target['op'] == 'goto':
+          # TODO
+          pass
+
+
+  return flattenedStory
+
+def cleanupCFG(cfgStory: dict) -> dict:
+  """
+    Remove all steps which are no longer referenced by any other steps
+  """
+
+  count = defaultdict(lambda: 0)
+  count[0] += 1 # First step is always used at least once
+  res = {**cfgStory}
+
+  for step in cfgStory.values():
+    for target in getTargets(step):
+      if 'outStep' in target:
+        count[target['outStep']] += 1
+
+  for stepId in cfgStory.keys():
+    if count[stepId] != 0: continue
+
+    # print('Deleting step ', stepId)
+    del res[stepId]
+
+  return res
+
+def parseStory(cfgStory: dict) -> dict:
   steps = []
-  for stepId in flattenedStory:
-    step = flattenedStory[stepId]
+  for step in cfgStory.values():
     conf = findMatchingStory(step['do'])
     if not conf:
       print(f'Sentence "{step["do"]}" could not be matched with a story from a block', file=sys.stderr)
@@ -146,13 +191,16 @@ if __name__ == "__main__":
   context.set(doc)
 
   normalStories = [normalizeStory(userStory) for userStory in context.userStories]
-  if command == 'normalized': print([*normalStories]); exit(0)
+  if command == 'normalized': print(normalStories); exit(0)
 
   tokenizedStories = [tokenizeStory(userStory) for userStory in normalStories]
   if command == 'tokenized': printStories(tokenizedStories)
 
   flattenedStories = [flattenStory(userStory) for userStory in tokenizedStories]
-  if command == 'flattened': printStoriesFlattened(flattenedStories); exit(0)
+  if command == 'flattened': printStoriesDict(flattenedStories); exit(0)
+
+  cfgStories = [cleanupCFG(controllFlowGraphKeywords(flattenedStory)) for flattenedStory in flattenedStories]
+  if command == 'cfg': printStoriesDict(cfgStories); exit(0)
 
   pipelines = [parseStory(userStory) for userStory in flattenedStories]
   if command == 'pipelines': print(pipelines); exit(0)

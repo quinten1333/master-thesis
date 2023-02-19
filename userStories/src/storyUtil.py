@@ -1,3 +1,4 @@
+import re
 from TextAnalyser import TextAnalyser
 
 from services.gateway import stories as gatewayStories
@@ -10,6 +11,22 @@ textAnalyser = TextAnalyser()
 def lmap(*args, **kwargs):
   return [*map(*args, **kwargs)]
 
+gotoRegex = re.compile('^goto (\d+)')
+def normalizeKeyword(text):
+  if text == 'stop':
+    return {
+      'op': text
+    }
+
+  goto = gotoRegex.match(text)
+  if goto:
+    return {
+      'op': 'goto',
+      'step': goto.group(1)
+    }
+
+  return None
+
 def normalizeSelection(text):
     split = text.split(' as ')
     if len(split) > 2:
@@ -21,20 +38,24 @@ def normalizeSelection(text):
     }
 
 def normalizePre(pre):
-  return {
-    **pre,
-    'select': lmap(normalizeSelection, pre['select']),
-  }
+  res = { **pre }
+  if 'select' in pre: res['select'] = lmap(normalizeSelection, pre['select'])
+
+  return res
 
 def normalizePost(post):
-  return {
-    **post,
-    'upsert': lmap(normalizeSelection, post['upsert']),
-  }
+  res = { **post }
+  if 'upsert' in post: res['upsert'] = lmap(normalizeSelection, post['upsert'])
+
+  return res
 
 def normalizeStory(userStory):
   def _normalizeStep(step):
     if type(step) == str:
+      keyword = normalizeKeyword(step)
+      if keyword:
+        return keyword
+
       return {
         'do': step
       }
@@ -56,6 +77,9 @@ def normalizeStory(userStory):
 def tokenizeStory(userStory):
   def _tokenizeStory(userStory):
     def _tokenizeStep(step):
+      if 'op' in step: # Ignore op steps
+        return step
+
       if 'condition' in step:
         return _tokenizeStory(step)
 

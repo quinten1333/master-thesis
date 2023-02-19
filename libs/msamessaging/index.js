@@ -183,6 +183,10 @@ class MSAPipeline {
       return state;
     }
 
+    if (pre.pick) {
+      return state[pre.pick];
+    }
+
     const res = {};
     for (const key of pre.select) {
       res[key.to] = state[key.from];
