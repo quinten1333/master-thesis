@@ -16,7 +16,7 @@ userStories:
     post:
       upsert:
       - password as dbpwd
-  - given: dbpwd equals undefined # Should be properly handled
+  - given: dbpwd equals `undefined` # Should be properly handled
     then:
     - set state "User not found" # Should continue with next non-conditional line
   - log state

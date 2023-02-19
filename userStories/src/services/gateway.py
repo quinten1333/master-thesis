@@ -1,4 +1,4 @@
-from Story import Story
+from Story import Story, sobj, iobj, objParse
 
 class Gateway:
   def __init__(self, path, port, method):
@@ -23,8 +23,8 @@ class Gateway:
     return self.config
 
 # TODO: Make method optional
-gatewayConf = Story('^http (get|post|put|patch|delete)? request path "(.*?)" port (\d+) ', lambda config, match, method, path, port: Gateway(path, port, method))
-gatewayConf.register(Story('(?: and )?parameter "(.*?)" of type "(.*?)"', lambda config, match, param, type: config.paramOfType(param, type)))
+gatewayConf = Story(f'^http (get|post|put|patch|delete)? request path {sobj} port {iobj} ', lambda config, match, method, path, port: Gateway(path, objParse(port), method))
+gatewayConf.register(Story(f'(?: and )?parameter {sobj} of type {sobj}', lambda config, match, param, type: config.paramOfType(param, type)))
 
 stories = [
   gatewayConf,

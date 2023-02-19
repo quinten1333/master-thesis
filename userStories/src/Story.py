@@ -1,6 +1,13 @@
 import re
+import json
 
 debug = False
+
+sobj = '`"([^`]*)"`'
+iobj = '(\d+)'
+obj = '`([^`]*)`'
+def objParse(obj):
+  return json.loads(obj)
 
 class Story:
   def __init__(self, regex, callback):
