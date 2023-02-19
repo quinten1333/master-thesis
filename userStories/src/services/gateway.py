@@ -23,8 +23,8 @@ class Gateway:
     return self.config
 
 # TODO: Make method optional
-gatewayConf = Story("^http (get|post|put|patch|delete) request path `` (.*?) '' port (\d+)", lambda config, match, method, path, port: Gateway(path, port, method))
-gatewayConf.register(Story("parameter `` (.*?) '' of type `` (.*?) ''", lambda config, match, param, type: config.paramOfType(param, type)))
+gatewayConf = Story('^http (get|post|put|patch|delete)? request path "(.*?)" port (\d+) ', lambda config, match, method, path, port: Gateway(path, port, method))
+gatewayConf.register(Story('(?: and )?parameter "(.*?)" of type "(.*?)"', lambda config, match, param, type: config.paramOfType(param, type)))
 
 stories = [
   gatewayConf,

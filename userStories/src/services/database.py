@@ -32,7 +32,7 @@ class Query:
       ],
     }
 
-query = Story("^query dataset `` (.+) '' ", lambda config, match, dataset: Query(dataset))
+query = Story('^query dataset "(.+)" ', lambda config, match, dataset: Query(dataset))
 query.register(Story('^find one ', lambda config, match: config.condition('one')))
 query.register(Story('^match state', lambda config, match: config.condition('equal')))
 

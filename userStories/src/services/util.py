@@ -1,15 +1,16 @@
 from Story import Story
 
 stories = [
-  Story('^devide (\d+)', lambda config, match, value: ({ 'block': 'util', 'fn': 'div', 'extraArgs': [ float(value) ] })),
-  Story('^minus (\d+)', lambda config, match, value: ({ 'block': 'util', 'fn': 'min', 'extraArgs': [ float(value) ] })),
-  Story('^modulo (\d+)', lambda config, match, value: ({ 'block': 'util', 'fn': 'mod', 'extraArgs': [ float(value) ] })),
-  Story('^time (\d+)', lambda config, match, value: ({ 'block': 'util', 'fn': 'mul', 'extraArgs': [ float(value) ] })),
-  Story('^plus (\d+)', lambda config, match, value: ({ 'block': 'util', 'fn': 'plus', 'extraArgs': [ float(value) ] })),
+  Story('^devide', lambda config, match: ({ 'block': 'util', 'fn': 'div', 'extraArgs': [ ] })),
+  Story('^minus', lambda config, match: ({ 'block': 'util', 'fn': 'min', 'extraArgs': [ ] })),
+  Story('^modulo', lambda config, match: ({ 'block': 'util', 'fn': 'mod', 'extraArgs': [ ] })),
+  Story('^time', lambda config, match: ({ 'block': 'util', 'fn': 'mul', 'extraArgs': [ ] })),
+  Story('^plus', lambda config, match: ({ 'block': 'util', 'fn': 'plus', 'extraArgs': [ ] })),
 
-  Story("^unpack `` (\w+) ''", lambda config, match, key: ({ 'block': 'util', 'fn': 'unpack', 'extraArgs': [ key ] })),
-  Story("^pack `` (\w+) ''", lambda config, match, key: ({ 'block': 'util', 'fn': 'pack', 'extraArgs': [ key ] })),
+  Story('^unpack "(\w+)"', lambda config, match, key: ({ 'block': 'util', 'fn': 'unpack', 'extraArgs': [ key ] })),
+  Story('^pack "(\w+)"', lambda config, match, key: ({ 'block': 'util', 'fn': 'pack', 'extraArgs': [ key ] })),
 
-  Story("^set state `` (.+) ''", lambda config, match, value: ({ 'block': 'util', 'fn': 'set', 'extraArgs': [ value ] })),
-  Story("^log state", lambda config, match: ({ 'block': 'util', 'fn': 'log', 'extraArgs': [ ] })),
+  Story('^set state "(.+)"', lambda config, match, value: ({ 'block': 'util', 'fn': 'set', 'extraArgs': [ value ] })),
+  Story('^set state (\d+)', lambda config, match, value: ({ 'block': 'util', 'fn': 'set', 'extraArgs': [ int(value) ] })),
+  Story('^log state', lambda config, match: ({ 'block': 'util', 'fn': 'log', 'extraArgs': [ ] })),
 ]
