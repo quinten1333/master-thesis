@@ -1,6 +1,5 @@
 import sys
 import yaml
-import json
 from collections import defaultdict
 
 from Context import context
@@ -245,4 +244,3 @@ if __name__ == "__main__":
   doc['pipelines'] = pipelines
   with open('compiled.yml', 'w') as outFile:
     yaml.dump(doc, outFile)
-
