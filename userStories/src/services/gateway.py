@@ -2,7 +2,7 @@ from Story import Story, sobj, iobj, objParse
 
 class Gateway:
   def __init__(self, path, port, method):
-    self.config = { 'block': 'gateway', 'fn': 'listen', 'extraArgs': [{ 'port': port, 'routes': [ { 'method': method, 'path': path, 'params': {} } ] }]}
+    self.config = { 'block': 'gateway', 'fn': 'listen', 'extraArgs': [{ 'port': port, 'routes': [ { 'method': method or 'get', 'path': path, 'params': {} } ] }]}
 
   def prepareParam(self, param):
     if param not in self.config['extraArgs'][0]['routes'][0]['params']:
@@ -23,7 +23,7 @@ class Gateway:
     return self.config
 
 # TODO: Make method optional
-gatewayConf = Story(f'^http (get|post|put|patch|delete)? request path {sobj} port {iobj} ', lambda config, match, method, path, port: Gateway(path, objParse(port), method))
+gatewayConf = Story(f'^http (get |post |put |patch |delete )?request path {sobj} port {iobj} ', lambda config, match, method, path, port: Gateway(path, objParse(port), method))
 gatewayConf.register(Story(f'(?: and )?parameter {sobj} of type {sobj}', lambda config, match, param, type: config.paramOfType(param, type)))
 
 stories = [
