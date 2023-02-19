@@ -6,6 +6,14 @@ from collections import defaultdict
 from Context import context
 from storyUtil import normalizeStory, tokenizeStory, findMatchingStory
 
+
+def printNormalStories(userStories: list):
+  for story in userStories:
+    print(0, '-', story['condition'])
+    for i, step in enumerate(story['steps']):
+      print(i + 1, '-', step)
+    print()
+
 def printStories(userStories: list):
   for story in userStories:
     for i, step in enumerate(story):
@@ -43,6 +51,22 @@ def handleInput():
   # TODO: Validate structure of datasets and userStories
 
   return [doc, command]
+
+
+def validateStory(userStory):
+  def check_step(step):
+    if 'condition' in step:
+      if 'steps' in step:
+        if 'condition' in step['steps'][0]:
+          raise BaseException(f'Cannot nest two conditions directly after each other.\nFirst condition {step["condition"]}\nSecond condition {step["steps"][0]["condition"]}')
+
+        for childStep in step['steps']:
+          check_step(childStep)
+
+  for step in userStory['steps']:
+    print(step)
+    check_step(step)
+
 
 def flattenStory(userStory: list, stepOffset=0, retStep=-1) -> dict: # TOOD: Add stop and goto
   """
@@ -192,7 +216,10 @@ if __name__ == "__main__":
   context.set(doc)
 
   normalStories = [normalizeStory(userStory) for userStory in context.userStories]
-  if command == 'normalized': print(normalStories); exit(0)
+  if command == 'normalized': printNormalStories(normalStories); exit(0)
+
+  for normalStory in normalStories: validateStory(normalStory)
+  if command == 'validated': printNormalStories(normalStories); print('validated'); exit(0)
 
   tokenizedStories = [tokenizeStory(userStory) for userStory in normalStories]
   if command == 'tokenized': printStories(tokenizedStories); exit(0)
