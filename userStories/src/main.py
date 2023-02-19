@@ -11,14 +11,12 @@ def printStories(userStories: list):
     for i, step in enumerate(story):
       print(i, '-', step)
     print()
-  exit(0)
 
 def printStoriesDict(userStories: dict):
   for storyDict in userStories:
     for stepId in storyDict:
       print(stepId, '-', storyDict[stepId])
     print()
-  exit(0)
 
 def handleInput():
   if len(sys.argv) < 2:
@@ -193,7 +191,7 @@ if __name__ == "__main__":
   if command == 'normalized': print(normalStories); exit(0)
 
   tokenizedStories = [tokenizeStory(userStory) for userStory in normalStories]
-  if command == 'tokenized': printStories(tokenizedStories)
+  if command == 'tokenized': printStories(tokenizedStories); exit(0)
 
   flattenedStories = [flattenStory(userStory) for userStory in tokenizedStories]
   if command == 'flattened': printStoriesDict(flattenedStories); exit(0)
@@ -201,11 +199,14 @@ if __name__ == "__main__":
   cfgStories = [cleanupCFG(controllFlowGraphKeywords(flattenedStory)) for flattenedStory in flattenedStories]
   if command == 'cfg': printStoriesDict(cfgStories); exit(0)
 
-  pipelines = [parseStory(userStory) for userStory in flattenedStories]
+  pipelines = [parseStory(userStory) for userStory in cfgStories]
   if command == 'pipelines': print(pipelines); exit(0)
 
-  print(json.dumps(pipelines))
+  if command:
+    print('Warning: Command not found')
+
+  printStoriesDict(cfgStories)
   doc['pipelines'] = pipelines
-  with open(sys.argv[1] + '-compiled.yml', 'w') as outFile:
+  with open('compiled.yml', 'w') as outFile:
     yaml.dump(doc, outFile)
 
