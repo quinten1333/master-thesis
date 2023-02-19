@@ -44,7 +44,7 @@ def handleInput():
 
   return [doc, command]
 
-def flattenStory(userStory: list, stepOffset=0) -> dict: # TOOD: Add stop and goto
+def flattenStory(userStory: list, stepOffset=0, retStep=-1) -> dict: # TOOD: Add stop and goto
   """
     Make a proper graph from the stories.
     This is done by doing two passes. First resolving the local graph which will
@@ -59,7 +59,7 @@ def flattenStory(userStory: list, stepOffset=0) -> dict: # TOOD: Add stop and go
 
   # Add offset to goto statements
 
-  def getConditionsAhead(startId, firstPass=True):
+  def getConditionsAhead(startId, firstPass=True, retStep=-1):
     """
       On first pass it only returns the amount of condition "steps" there are ahead.
       On second pas it recursively enters all conditions, resolves their graphs
@@ -76,7 +76,7 @@ def flattenStory(userStory: list, stepOffset=0) -> dict: # TOOD: Add stop and go
       condition = stepsDict[id]
 
       if not firstPass:
-        storySteps = flattenStory(condition['steps'], newSteps)
+        storySteps = flattenStory(condition['steps'], newSteps, retStep)
         outStep = newSteps
         newSteps += len(condition['steps'])
         newStepsDict = { **newStepsDict, **storySteps}
@@ -97,19 +97,23 @@ def flattenStory(userStory: list, stepOffset=0) -> dict: # TOOD: Add stop and go
 
     return conditions
 
+
   for stepId, step in stepsDict.items():
     if stepId == steps - 1:
+      if retStep > 0:
+        step['outStep'] = retStep
       continue
 
     step['outStep'] = stepId + getConditionsAhead(stepId, True) + 1
 
   # print('firstPass', stepsDict)
 
-  for stepId in stepsDict:
-    if stepId == steps - 1:
+  stepsSnapshot = steps # Needed because steps counter will change during loop
+  for stepId, step in stepsDict.items():
+    if stepId == stepsSnapshot - 1:
       continue
 
-    conditionsAhead = getConditionsAhead(stepId, False)
+    conditionsAhead = getConditionsAhead(stepId, False, step['outStep'])
     if conditionsAhead:
       stepsDict[stepId]['outCondition'] = conditionsAhead
 
