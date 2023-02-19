@@ -17,6 +17,10 @@ class Doc:
   def datasets(self):
     return self.doc['datasets']
 
+  @property
+  def userStories(self):
+    return self.doc['userStories']
+
   def findDataset(self, name):
     dataset = self.datasets[name]
     if not dataset:

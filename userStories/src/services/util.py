@@ -9,5 +9,7 @@ stories = [
 
   Story("^unpack `` (\w+) ''", lambda config, match, key: ({ 'block': 'util', 'fn': 'unpack', 'extraArgs': [ key ] })),
   Story("^pack `` (\w+) ''", lambda config, match, key: ({ 'block': 'util', 'fn': 'pack', 'extraArgs': [ key ] })),
+
+  Story("^set state `` (.+) ''", lambda config, match, value: ({ 'block': 'util', 'fn': 'set', 'extraArgs': [ value ] })),
   Story("^log state", lambda config, match: ({ 'block': 'util', 'fn': 'log', 'extraArgs': [ ] })),
 ]

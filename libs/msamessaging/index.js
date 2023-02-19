@@ -200,13 +200,27 @@ class MSAPipeline {
       state[post.set] = output;
     }
 
-    if (output) {
+    if (output && post.upsert) {
       for (const key of post.upsert) {
         state[key.to] = output[key.from]
       }
     }
 
+    if (state && post.unset) {
+      for (const key of post.unset) {
+        delete state[key]
+      }
+    }
+
     return state;
+  }
+
+  getOutdata = (stepConfig) => {
+    if (stepConfig.outCondition) {
+      // TODO
+    }
+
+    return [stepConfig.outQueue, stepConfig.outStep];
   }
 
   genReceive(queueConfig) {
@@ -227,10 +241,11 @@ class MSAPipeline {
         return;
       }
 
-      if (typeof stepConfig.outQueue !== 'undefined') {
-        debug('Sending result to %s',stepConfig.outQueue);
-        output = this.getOutput(output, data.state, stepConfig.post);
-        this.conn.send(stepConfig.outQueue, { ...data, step: data.step + 1, state: output });
+      const [outQueue, outStep] = this.getOutdata(stepConfig);
+      if (outQueue) {
+        debug('Sending result to %s', outQueue);
+        const outState = this.getOutput(output, data.state, stepConfig.post);
+        this.conn.send(outQueue, { ...data, step: outStep, state: outState });
       }
     }
   }

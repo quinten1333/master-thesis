@@ -2,77 +2,24 @@ import sys
 import yaml
 import json
 
-from TextAnalyser import TextAnalyser
 from Context import context
+from storyUtil import normalizeStory, tokenizeStory, findMatchingStory
 
-from services.gateway import stories as gatewayStories
-from services.util import stories as utilStories
-from services.database import stories as databaseStories
+def printStories(userStories):
+  for story in userStories:
+    for i, step in enumerate(story):
+      print(i, '-', step)
+    print()
+  exit(0)
 
-serviceStories = [*gatewayStories, *utilStories, *databaseStories]
-textAnalyser = TextAnalyser()
+def printStoriesFlattened(userStories):
+  for storyDict in userStories:
+    for stepId in storyDict:
+      print(stepId, '-', storyDict[stepId])
+    print()
+  exit(0)
 
-def tokenizeStory(gerkinStory):
-  tokens = textAnalyser.tokenize('given ' + gerkinStory['given'])
-  tokens.pop(0)  # Remove "Given"
-  given = { 'do': ' '.join(tokens) }
-
-  then = []
-  for sentence in gerkinStory['then']:
-    if type(sentence) != str:
-      then.append({
-        **sentence,
-        'do': ' '.join(textAnalyser.tokenize(sentence['do'])),
-      })
-      continue
-
-    then.append({
-      'do': ' '.join(textAnalyser.tokenize(sentence))
-    })
-
-  return [given, *then]
-
-
-def findMatchingStory(inputStory):
-  for story in serviceStories:
-    conf = story.run(inputStory)
-    if conf:
-      return conf
-
-  return None
-
-def normalizeSelection(text):
-    split = text.split(' as ')
-    if len(split) > 2:
-      raise BaseException('Too many arguments')
-
-    return {
-      'from': split[0],
-      'to': split[1] if len(split) == 2 else split[0]
-    }
-
-def normalizePre(pre):
-  select = []
-  for key in pre['select']:
-    select.append(normalizeSelection(key))
-
-  return {
-    **pre,
-    'select': select,
-  }
-
-def normalizePost(post):
-  upsert = []
-  for key in post['upsert']:
-    upsert.append(normalizeSelection(key))
-
-  return {
-    **post,
-    'upsert': upsert,
-  }
-
-
-if __name__ == "__main__":
+def handleInput():
   if len(sys.argv) < 2:
     print('Please give input file', file=sys.stderr)
     sys.exit(1)
@@ -96,35 +43,119 @@ if __name__ == "__main__":
 
   # TODO: Validate structure of datasets and userStories
 
-  inputStories = [tokenizeStory(inputStory) for inputStory in doc['userStories']]
-  if command == 'debug':
-    for story in inputStories:
-      for step in story:
-        print(step)
-      print()
-    exit(0)
+  return [doc, command]
 
+def flattenStory(userStory: list, stepOffset=0) -> dict:
+  """
+    Make a proper graph from the stories.
+    This is done by doing two passes. First resolving the local graph which will
+    be followed if all the conditions turn out to be false. In a second pass
+    all conditions are entered recursively, resolved and added to the stepsDict.
 
+    The step list is converted into a dictionary to keep the id's stable, hence
+     the function returns a dictionary.
+  """
+  stepsDict = {i + stepOffset: step for i, step in enumerate(userStory)}
+  steps = len(userStory) + stepOffset
+
+  def getConditionsAhead(startId, firstPass=True):
+    """
+      On first pass it only returns the amount of condition "steps" there are ahead.
+      On second pas it recursively enters all conditions, resolves their graphs
+      and adds them to the stepsDict, flattening the structure into a
+      conditional directed graph.
+    """
+    nonlocal stepsDict, steps
+
+    id = startId + 1
+    conditions = []
+    newStepsDict = { **stepsDict }
+    newSteps = steps
+    while 'condition' in stepsDict[id]:
+      condition = stepsDict[id]
+
+      if not firstPass:
+        storySteps = flattenStory(condition['steps'], newSteps)
+        outStep = newSteps
+        newSteps += len(condition['steps'])
+        newStepsDict = { **newStepsDict, **storySteps}
+
+        conditions.append({
+          'do': condition['condition']['do'],
+          'outStep': outStep,
+        })
+        del newStepsDict[id]
+
+      id += 1
+
+    if firstPass:
+      return id - startId - 1
+
+    stepsDict = newStepsDict
+    steps = newSteps
+
+    return conditions
+
+  for stepId in stepsDict:
+    step = stepsDict[stepId];
+    if stepId == steps - 1:
+      continue
+
+    step['outStep'] = stepId + getConditionsAhead(stepId, True) + 1
+
+  # print('firstPass', stepsDict)
+
+  for stepId in stepsDict:
+    if stepId == steps - 1:
+      continue
+
+    conditionsAhead = getConditionsAhead(stepId, False)
+    if conditionsAhead:
+      stepsDict[stepId]['outCondition'] = conditionsAhead
+
+  # print('Second pass', stepsDict)
+
+  return stepsDict
+
+def parseStory(flattenedStory):
+  steps = []
+  for stepId in flattenedStory:
+    step = flattenedStory[stepId]
+    conf = findMatchingStory(step['do'])
+    if not conf:
+      print(f'Sentence "{step["do"]}" could not be matched with a story from a block', file=sys.stderr)
+      exit(1)
+
+    if type(conf) != dict:
+      conf = conf.getConfig()
+
+    step = {
+      **step,
+      **conf,
+    }
+    del step['do']
+
+    steps.append(step)
+
+  return {
+    'steps': steps
+  }
+
+if __name__ == "__main__":
+  [doc, command] = handleInput()
   context.set(doc)
-  pipelines = []
-  for inputStory in inputStories:
-    steps = []
-    for step in inputStory:
-      conf = findMatchingStory(step['do'])
-      if not conf:
-        print(f'Sentence "{step["do"]}" could not be matched with a story from a block', file=sys.stderr)
-        exit(1)
 
-      if type(conf) != dict:
-        conf = conf.getConfig()
+  normalStories = [normalizeStory(userStory) for userStory in context.userStories]
+  if command == 'normalized': print([*normalStories]); exit(0)
 
-      if 'pre' in step: conf['pre'] = normalizePre(step['pre'])
-      if 'post' in step: conf['post'] = normalizePost(step['post'])
-      steps.append(conf)
-    pipelines.append({
-      'steps': steps
-    })
+  tokenizedStories = [tokenizeStory(userStory) for userStory in normalStories]
+  if command == 'tokenized': printStories(tokenizedStories)
 
+  flattenedStories = [flattenStory(userStory) for userStory in tokenizedStories]
+  if command == 'flattened': printStoriesFlattened(flattenedStories); exit(0)
+
+  pipelines = [parseStory(userStory) for userStory in flattenedStories]
+  if command == 'pipelines': print(pipelines); exit(0)
 
   print(json.dumps(pipelines))
   doc['pipelines'] = pipelines
