@@ -8,6 +8,7 @@ from .TextAnalyser import tokenizeStory
 from .Story.Manager import StoryManager
 
 serviceStories = StoryManager()
+conditionStories = StoryManager()
 
 def printNormalStories(userStories: list):
   for story in userStories:
@@ -199,7 +200,13 @@ def parseConditions(cfgStory: dict) -> dict:
   for step in cfgStory.values():
     if 'outCondition' not in step: continue
 
-
+    for i in range(len(step['outCondition'])):
+      conf = conditionStories.findMatchingStory(step['outCondition'][i]['do'])
+      step['outCondition'][i] = {
+        **step['outCondition'][i],
+        **conf,
+      }
+      del step['outCondition'][i]['do']
 
 
 
@@ -209,12 +216,6 @@ def parseStory(cfgStory: dict) -> dict:
   steps = []
   for step in cfgStory.values():
     conf = serviceStories.findMatchingStory(step['do'])
-    if not conf:
-      print(f'Sentence "{step["do"]}" could not be matched with a story from a block', file=sys.stderr)
-      exit(1)
-
-    if type(conf) != dict:
-      conf = conf.getConfig()
 
     step = {
       **step,
@@ -248,6 +249,7 @@ if __name__ == "__main__":
   cfgStories = [cleanupCFG(controllFlowGraphKeywords(flattenedStory)) for flattenedStory in flattenedStories]
   if command == 'cfg': printStoriesDict(cfgStories); exit(0)
 
+  conditionStories.loadDir('condition')
   cfgCondParsedStories = [parseConditions(cfgStory) for cfgStory in cfgStories]
   if command == 'conditionsParsed': printStoriesDict(cfgCondParsedStories); exit(0)
 

@@ -24,6 +24,8 @@ class StoryManager:
     for story in self.stories:
       conf = story.run(inputStory)
       if conf:
+        if type(conf) != dict:
+          return conf.getConfig()
         return conf
 
-    return None
+    raise BaseException(f'Sentence "{inputStory}" could not be matched with a story')

@@ -6,8 +6,16 @@ debug = False
 sobj = '`"([^`]*)"`'
 iobj = '(\d+)'
 obj = '`([^`]*)`'
+identifierOrObj = '([^ ]+)'
 def objParse(obj):
   return json.loads(obj)
+sobjCompiled = re.compile(sobj)
+def resolveIdentifierOrObj(input):
+  res = sobjCompiled.match(input)
+  if res:
+    return { 'type': 'str', 'value': res.group(0) }
+
+  return { 'type': 'identifier', 'value': input }
 
 class Story:
   def __init__(self, regex, callback):
