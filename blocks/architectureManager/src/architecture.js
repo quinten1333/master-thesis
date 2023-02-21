@@ -18,6 +18,8 @@ export default class Architecture {
   generateIOConfig = () => {
     const result = {};
 
+    const genOutQueue = (pipeId, outStep) => this.namespace(pipeId, this.pipelines[pipeId].steps[outStep].block);
+
     for (const pipeId in this.pipelines) {
       const steps = this.pipelines[pipeId].steps;
 
@@ -53,9 +55,14 @@ export default class Architecture {
 
         pipeConfig.queues[namespacedQueue].steps[step] = {
           ...stepConfig,
+          ...(stepConfig.outCondition ? { outCondition: stepConfig.outCondition.map((condition) => {
+            if (!condition['outStep']) { return condition; }
+            condition.outQueue = genOutQueue(pipeId, condition['outStep']);
+            return condition;
+          }) } : {}),
           extraArgs: stepConfig.extraArgs || [],
-          ...(steps.length - 1 !== step ? {
-            outQueue: this.namespace(pipeId, steps[step + 1].block)
+          ...(stepConfig.outStep ? {
+            outQueue: genOutQueue(pipeId, stepConfig.outStep),
           } : {}),
         }
       }
