@@ -213,8 +213,8 @@ def parseConditions(cfgStory: dict) -> dict:
   return cfgStory
 
 def parseStory(cfgStory: dict) -> dict:
-  steps = []
-  for step in cfgStory.values():
+  steps = {}
+  for stepId, step in cfgStory.items():
     conf = serviceStories.findMatchingStory(step['do'])
 
     step = {
@@ -223,7 +223,7 @@ def parseStory(cfgStory: dict) -> dict:
     }
     del step['do']
 
-    steps.append(step)
+    steps[stepId] = step
 
   return {
     'steps': steps
