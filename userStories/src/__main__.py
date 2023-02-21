@@ -104,7 +104,11 @@ def flattenStory(userStory: list, stepOffset=0, retStep=-1) -> dict: # TOOD: Add
     conditions = []
     newStepsDict = { **stepsDict }
     newSteps = steps
-    while 'condition' in stepsDict[id]:
+    while True:
+      while id not in stepsDict and id < steps:
+        id += 1
+      if not (id < steps and 'condition' in stepsDict[id]):
+        break
       condition = stepsDict[id]
 
       if not firstPass:
