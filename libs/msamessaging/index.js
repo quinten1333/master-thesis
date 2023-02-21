@@ -90,6 +90,7 @@ class MSAArchitecture {
   constructor(archIO, functions) {
     this.archIO = archIO;
     this.functions = functions;
+    this.validateIO();
 
     this.started = false;
     this.conn = null;
@@ -98,11 +99,11 @@ class MSAArchitecture {
   }
 
   validateIO() {
-    if (!this.pipeIO.endpoint) {
+    if (!this.archIO.endpoint) {
       throw new Error(`Endpoint of architecture missing!`);
     }
 
-    if (!this.pipeIO.pipelines) {
+    if (!this.archIO.pipelines) {
       throw new Error('Pipelines of architecture missing!');
     }
   }
@@ -168,6 +169,23 @@ class MSAPipeline {
         if (!Array.isArray(stepConfig.extraArgs)) {
           throw new Error(`Required extraArgs parameter is not an array.`)
         }
+        if (!!stepConfig.outStep !== !!stepConfig.outQueue) {
+          throw new Error(`Output of config if partially configured: outStep=${stepConfig.outStep} outQueue=${stepConfig.outQueue}`);
+        }
+
+        if (stepConfig.outCondition) {
+          for (const condition of stepConfig.outCondition) {
+            if (!condition.fn) {
+              throw new Error(`Condition function is not set. Got condition: ${condition}`);
+            }
+
+            condition.fn = eval(condition.fn); //! Insecure
+            if (typeof condition.fn !== 'function') {
+              throw new Error(`Condition function is not actually of type function! Got type ${typeof condition.fn}`);
+            }
+          }
+        }
+
       }
     }
   }
@@ -219,9 +237,13 @@ class MSAPipeline {
     return state;
   }
 
-  getOutdata = (stepConfig) => {
+  getOutdata = (stepConfig, outState) => {
     if (stepConfig.outCondition) {
-      // TODO
+      for (const condition of stepConfig.outCondition) {
+        if (condition.fn(outState)) {
+          return [condition['outQueue'], condition['outStep']]
+        }
+      }
     }
 
     return [stepConfig.outQueue, stepConfig.outStep];
@@ -245,10 +267,10 @@ class MSAPipeline {
         return;
       }
 
-      const [outQueue, outStep] = this.getOutdata(stepConfig);
+      const outState = this.getOutput(output, data.state, stepConfig.post);
+      const [outQueue, outStep] = this.getOutdata(stepConfig, outState);
       if (outQueue) {
         debug('Sending result to %s', outQueue);
-        const outState = this.getOutput(output, data.state, stepConfig.post);
         this.conn.send(outQueue, { ...data, step: outStep, state: outState });
       }
     }
