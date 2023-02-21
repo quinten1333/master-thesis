@@ -14,11 +14,8 @@ userStories:
       - username
     do: query dataset "db" find one match state
     post:
-      # unset:
-      # - key
       upsert:
       - password as dbpwd
-      # set: completeResultInThisKey
   - given: dbpwd equals `undefined`
     then:
     - set state "User not found"
@@ -27,9 +24,6 @@ userStories:
     - set state "Incorrect password"
   - log state
   - respond to the http request on port 3000
-
-    # do: query mongodb database at "mongodb" using "username" and "password", add "result.password" to the state as "databasePassword"
-
 
 # - given: a http get request with path "/user/register" on port 3000 with parameter "username" of type "string" and a parameter "password" of type "string" and a parameter "email" of type "string"
 #   then:
