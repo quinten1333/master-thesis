@@ -19,6 +19,9 @@ userStories:
   - given: dbpwd equals `undefined` # Should be properly handled
     then:
     - set state "User not found" # Should continue with next non-conditional line
+    - given: state equals "Hello there"
+      then:
+      - stop
   - log state
   - respond to the http request on port 3000
 
