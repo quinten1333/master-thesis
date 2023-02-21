@@ -21,7 +21,7 @@ services:
     environment:
       PORT: 80
       IOConfig: '{ "endpoint": "amqp://rabbitmq" }'
-      DEBUG: architectureManager, messaging
+      DEBUG: architectureManager
       DEBUG_COLORS: true
 
   gateway:
@@ -35,7 +35,7 @@ services:
       - ./libs:/app/node_modules/@amicopo
     environment:
       IOConfig: '{ "archEndpoint": "amqp://rabbitmq", "archExchange": "arch-management-gateway" }'
-      DEBUG: 'gateway:*,messaging'
+      DEBUG: 'gateway:*'
       DEBUG_COLORS: true
 
   mongodb:
@@ -47,7 +47,7 @@ services:
       - ./libs:/app/node_modules/@amicopo
     environment:
       IOConfig: '{ "archEndpoint": "amqp://rabbitmq", "archExchange": "arch-management-mongodb" }'
-      DEBUG: 'mongodb:*,messaging'
+      DEBUG: 'mongodb:*'
       DEBUG_COLORS: true
 
   filesystem:
@@ -59,7 +59,7 @@ services:
       - ./libs:/app/node_modules/@amicopo
     environment:
       IOConfig: '{ "archEndpoint": "amqp://rabbitmq", "archExchange": "arch-management-filesystem" }'
-      DEBUG: 'messaging'
+      DEBUG: ''
       DEBUG_COLORS: true
 
   util:
@@ -71,10 +71,11 @@ services:
       - ./libs:/app/node_modules/@amicopo
     environment:
       IOConfig: '{ "archEndpoint": "amqp://rabbitmq", "archExchange": "arch-management-util" }'
-      DEBUG: 'messaging'
+      DEBUG: ''
       DEBUG_COLORS: true
 
   dataset-mongodb:
     image: mongo
+    command: mongod --quiet --logpath /dev/null
     ports:
       - 27017:27017
