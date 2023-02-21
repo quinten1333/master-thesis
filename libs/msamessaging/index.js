@@ -191,7 +191,7 @@ class MSAPipeline {
   }
 
   handleError(data, err) {
-    // TODO: Send error to original gateway to be returned to the user.
+    // TODO: Add error mechanism for each pipeline. Default if using gateway is to return the error to the user.
     // Move to job based invocation?
     console.error(err);
   }

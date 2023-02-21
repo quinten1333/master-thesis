@@ -76,7 +76,7 @@ def validateStory(userStory):
     check_step(step)
 
 
-def flattenStory(userStory: list, stepOffset=0, retStep=-1) -> dict: # TOOD: Add stop and goto
+def flattenStory(userStory: list, stepOffset=0, retStep=-1) -> dict:
   """
     Make a proper graph from the stories.
     This is done by doing two passes. First resolving the local graph which will
