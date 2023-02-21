@@ -1,6 +1,18 @@
 import re
 from ..Story import Story, resolveIdentifierOrObj
 
+def genCompareFunction(a, op, b):
+    def toJSVar(input):
+        res = resolveIdentifierOrObj(input)
+        if res['type'] == 'identifier':
+          return f'state.{res["value"]}'
+        elif res['type'] == 'keyword':
+           return res['value']
+
+        return f'"{res["value"]}"'
+
+    return f'(state) => {toJSVar(a)} {op} {toJSVar(b)}'
+
 stories = [
-  Story(f'(.+) equal (.+)', lambda config, match, a, b: { 'a': resolveIdentifierOrObj(a), 'b': resolveIdentifierOrObj(b) }), # TODO: Make js function here
+  Story(f'(.+) equal (.+)', lambda config, match, a, b: { 'fn': genCompareFunction(a, '===', b) }),
 ]

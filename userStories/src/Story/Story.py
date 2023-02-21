@@ -8,12 +8,19 @@ iobj = '(\d+)'
 obj = '`([^`]*)`'
 identifierOrObj = '([^ ]+)'
 def objParse(obj):
-  return json.loads(obj)
-sobjCompiled = re.compile(sobj)
+  try:
+    return json.loads(obj)
+  except:
+    raise BaseException(f'Failed to parse JSON object from input: {obj}')
+objCompiled = re.compile(obj)
 def resolveIdentifierOrObj(input):
-  res = sobjCompiled.match(input)
+  res = objCompiled.match(input)
   if res:
-    return { 'type': 'str', 'value': res.group(0) }
+    value = res.group(1)
+    if value == 'undefined':
+      return { 'type': 'keyword', 'value': value}
+
+    return { 'type': 'value', 'value': objParse(value) }
 
   return { 'type': 'identifier', 'value': input }
 
