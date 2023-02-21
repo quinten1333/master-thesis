@@ -3,8 +3,11 @@ import yaml
 from collections import defaultdict
 
 from .Context import context
-from .storyUtil import loadStories, getStories, normalizeStory, tokenizeStory, findMatchingStory
+from .normalize import normalizeStory
+from .TextAnalyser import tokenizeStory
+from .Story.Manager import StoryManager
 
+serviceStories = StoryManager()
 
 def printNormalStories(userStories: list):
   for story in userStories:
@@ -205,7 +208,7 @@ def parseConditions(cfgStory: dict) -> dict:
 def parseStory(cfgStory: dict) -> dict:
   steps = []
   for step in cfgStory.values():
-    conf = findMatchingStory(step['do'], 'service')
+    conf = serviceStories.findMatchingStory(step['do'])
     if not conf:
       print(f'Sentence "{step["do"]}" could not be matched with a story from a block', file=sys.stderr)
       exit(1)
@@ -248,7 +251,7 @@ if __name__ == "__main__":
   cfgCondParsedStories = [parseConditions(cfgStory) for cfgStory in cfgStories]
   if command == 'conditionsParsed': printStoriesDict(cfgCondParsedStories); exit(0)
 
-  loadStories('service')
+  serviceStories.loadDir('service')
   pipelines = [parseStory(userStory) for userStory in cfgStories]
   if command == 'pipelines': print(pipelines); exit(0)
 

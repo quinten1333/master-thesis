@@ -72,3 +72,24 @@ class TextAnalyser:
 
   def tokenizeMultiSentence(self, sentences):
     return [self.tokenize(sentence) for sentence in sent_tokenize(sentences)]
+
+
+textAnalyser = TextAnalyser()
+
+def tokenizeStory(userStory):
+  def _tokenizeStep(step):
+    if 'op' in step: # Ignore op steps
+      return step
+
+    if 'condition' in step:
+      return tokenizeStory(step)
+
+    return {
+      **step,
+      'do': ' '.join(textAnalyser.tokenize(step['do'])),
+    }
+
+  return {
+    'condition': _tokenizeStep(userStory['condition']),
+    'steps': [*map(_tokenizeStep, userStory['steps'])],
+  }
