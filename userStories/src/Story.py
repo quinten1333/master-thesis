@@ -63,4 +63,3 @@ class Story:
       raise BaseException(f'Could not parse complete story.\nInput: "{input}"\nRemaining:"{remaining}"')
 
     return conf
-

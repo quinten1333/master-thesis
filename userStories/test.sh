@@ -1,6 +1,6 @@
 echo "reboot" > ../libs/msamessaging/reboot.js
 
-python src/main.py thesisfairPlatform.yml $@
+python -m src thesisfairPlatform.yml $@
 
 curl -X POST --data-urlencode "yaml=$(cat thesisfairPlatform.yml-compiled.yml | sed "s/\"/'/g")" localhost:3001/architecture
 echo

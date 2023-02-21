@@ -1,4 +1,4 @@
-from Story import Story, sobj, iobj, objParse
+from ..Story import Story, sobj, iobj, objParse
 
 class Gateway:
   def __init__(self, path, port, method):

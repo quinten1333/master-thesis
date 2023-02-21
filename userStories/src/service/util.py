@@ -1,4 +1,4 @@
-from Story import Story, sobj, obj, objParse
+from ..Story import Story, sobj, obj, objParse
 
 stories = [
   Story('^devide', lambda config, match: ({ 'block': 'util', 'fn': 'div', 'extraArgs': [ ] })),

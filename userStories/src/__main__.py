@@ -2,8 +2,8 @@ import sys
 import yaml
 from collections import defaultdict
 
-from Context import context
-from storyUtil import normalizeStory, tokenizeStory, findMatchingStory
+from .Context import context
+from .storyUtil import loadStories, getStories, normalizeStory, tokenizeStory, findMatchingStory
 
 
 def printNormalStories(userStories: list):
@@ -192,10 +192,20 @@ def cleanupCFG(cfgStory: dict) -> dict:
 
   return res
 
+def parseConditions(cfgStory: dict) -> dict:
+  for step in cfgStory.values():
+    if 'outCondition' not in step: continue
+
+
+
+
+
+  return cfgStory
+
 def parseStory(cfgStory: dict) -> dict:
   steps = []
   for step in cfgStory.values():
-    conf = findMatchingStory(step['do'])
+    conf = findMatchingStory(step['do'], 'service')
     if not conf:
       print(f'Sentence "{step["do"]}" could not be matched with a story from a block', file=sys.stderr)
       exit(1)
@@ -219,6 +229,7 @@ if __name__ == "__main__":
   [doc, command] = handleInput()
   context.set(doc)
 
+
   normalStories = [normalizeStory(userStory) for userStory in context.userStories]
   if command == 'normalized': printNormalStories(normalStories); exit(0)
 
@@ -234,6 +245,10 @@ if __name__ == "__main__":
   cfgStories = [cleanupCFG(controllFlowGraphKeywords(flattenedStory)) for flattenedStory in flattenedStories]
   if command == 'cfg': printStoriesDict(cfgStories); exit(0)
 
+  cfgCondParsedStories = [parseConditions(cfgStory) for cfgStory in cfgStories]
+  if command == 'conditionsParsed': printStoriesDict(cfgCondParsedStories); exit(0)
+
+  loadStories('service')
   pipelines = [parseStory(userStory) for userStory in cfgStories]
   if command == 'pipelines': print(pipelines); exit(0)
 

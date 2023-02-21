@@ -1,12 +1,34 @@
 import re
-from TextAnalyser import TextAnalyser
+from .TextAnalyser import TextAnalyser
+from pathlib import Path
+import importlib
 
-from services.gateway import stories as gatewayStories
-from services.util import stories as utilStories
-from services.database import stories as databaseStories
-
-serviceStories = [*gatewayStories, *utilStories, *databaseStories]
 textAnalyser = TextAnalyser()
+
+stories = {}
+def registerStories(type: str, newStories: list) -> None:
+  if type not in stories:
+    stories[type] = []
+
+  stories[type].extend(newStories)
+def getStories(type: str) -> list:
+  return stories[type]
+
+
+def loadStories(type: str) -> None:
+  root = Path(__file__).parent.resolve(True)
+  dir = root / type
+  for fPath in dir.iterdir():
+    if not fPath.is_file(): continue
+    if not fPath.name.endswith('.py'): continue
+
+    name = fPath.name[:-3]
+    mod = importlib.import_module(f'.{type}.{name}', __package__)
+    if not isinstance(mod.stories, list):
+      raise BaseException(f'Error: .{type}.{name} does not define a stories array')
+
+    registerStories(type, mod.stories)
+
 
 def lmap(*args, **kwargs):
   return [*map(*args, **kwargs)]
@@ -94,8 +116,8 @@ def tokenizeStory(userStory):
 
 
 
-def findMatchingStory(inputStory):
-  for story in serviceStories:
+def findMatchingStory(inputStory: str, type: str):
+  for story in getStories(type):
     conf = story.run(inputStory)
     if conf:
       return conf

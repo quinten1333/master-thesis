@@ -1,5 +1,5 @@
-from Story import Story, sobj
-from Context import context
+from ..Story import Story, sobj
+from ..Context import context
 
 class Query:
   typeToBlock = {
