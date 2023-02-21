@@ -14,5 +14,6 @@ def genCompareFunction(a, op, b):
     return f'(state) => {toJSVar(a)} {op} {toJSVar(b)}'
 
 stories = [
+  Story(f'(.+) not equal (.+)', lambda config, match, a, b: { 'fn': genCompareFunction(a, '!==', b) }),
   Story(f'(.+) equal (.+)', lambda config, match, a, b: { 'fn': genCompareFunction(a, '===', b) }),
 ]
