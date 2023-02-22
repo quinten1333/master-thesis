@@ -46,6 +46,10 @@ class Server {
         this.routes[method] = {};
       }
 
+      if (route.path in this.routes[method]) {
+        throw new Error(`Route "${route.path}" already registered!`);
+      }
+
       this.routes[method][route.path] = {
         params: route.params,
         pipeline: pipeline,
