@@ -14,11 +14,10 @@ io.register('listen', ({ pipeline, start }, args: { port: number, routes: Route[
   const { port, routes } = args;
 
   if (start) {
-    if (port in servers) {
-      servers[port].loadRoutes(pipeline, routes);
-    } else {
-      servers[port] = new Server(port, pipeline, routes);
+    if (!(port in servers)) {
+      servers[port] = new Server(port);
     }
+    servers[port].loadRoutes(pipeline, routes);
   } else {
     servers[port].unloadPipeline(pipeline);
     if (!servers[port].hasRoutes()) {

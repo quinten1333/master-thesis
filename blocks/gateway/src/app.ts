@@ -30,11 +30,10 @@ class Server {
 
   private routes: CompiledRoutes = {}
 
-  constructor(port: number, pipeline: Pipeline, routes: Route[]) {
+  constructor(port: number) {
     this.port = port;
     this.openRequests = {};
 
-    this.loadRoutes(pipeline, routes);
     this.createApp();
     this.createServer();
   }
