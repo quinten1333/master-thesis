@@ -6,7 +6,7 @@ if [ $1 ]; then
   exit
 fi
 
-curl -X POST --data-urlencode "yaml=$(cat compiled.yml | sed "s/\"/'/g")" localhost:3001/architecture
+curl -X POST --data-urlencode "yaml=$(cat compiled.yml | sed "s/\"/'/g")" localhost:3001/api/architecture
 echo
 curl localhost:3001/architecture/0/active?active=true
 echo

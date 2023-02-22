@@ -1,11 +1,14 @@
 import React from 'react';
+import { Container } from 'react-bootstrap';
+
+import Architectures from './pages/Architectures';
 
 class App extends React.Component {
   render() {
     return (
-      <div className="App">
-        Hi There!
-      </div>
+      <Container>
+        <Architectures />
+      </Container>
     );
   }
 }

@@ -1,14 +1,25 @@
 export default class Architecture {
-  constructor(conn, id, name, datasets, pipelines, endpoint) {
+  constructor(conn, id, arch) {
     this.conn = conn;
 
     this.id = id;
-    this.name = name;
-    this.datasets = datasets;
-    this.pipelines = pipelines;
-    this.endpoint = endpoint;
+    this.name = arch.name;
+    this.datasets = arch.datasets;
+    this.pipelines = arch.pipelines;
+    this.endpoint = arch.endpoint;
 
     this.IOConfig = this.generateIOConfig();
+    this.state = 0
+  }
+
+  json() {
+    return {
+      name: this.name,
+      datasets: this.datasets,
+      pipelines: this.pipelines,
+      endpoint: this.endpoint,
+      state: this.state,
+    }
   }
 
   namespace(pipeId, str) {
@@ -71,7 +82,7 @@ export default class Architecture {
   }
 
   async create() {
-    if (this.active) {
+    if (this.state !== 0) {
       throw new Error('Architecture is already active!');
     }
     // TODO: Check if service is running
@@ -88,7 +99,7 @@ export default class Architecture {
       }
     }
 
-    this.active = true;
+    this.state = 1;
   }
 
   async delete(ignoreErrors=false) {
@@ -102,6 +113,6 @@ export default class Architecture {
       }
     }
 
-    this.active = false;
+    this.state = 0;
   }
 }

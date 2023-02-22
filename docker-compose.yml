@@ -9,6 +9,17 @@ services:
       - 15672:15672
       - 5672:5672
 
+  architectureManager-frontend:
+    image: node:latest
+    entrypoint: npm start
+    working_dir: /app
+    ports:
+      - 3002:3002
+    volumes:
+      - ./blocks/architectureManager/frontend:/app
+    environment:
+      PORT: 3002
+
   architectureManager:
     image: node:latest
     entrypoint: npm run dev
@@ -20,6 +31,7 @@ services:
       - ./libs:/app/node_modules/@amicopo
     environment:
       PORT: 80
+      NODE_ENV: development
       IOConfig: '{ "endpoint": "amqp://rabbitmq" }'
       DEBUG: architectureManager
       DEBUG_COLORS: true
