@@ -145,9 +145,11 @@ class MSAPipeline {
     this.reqIdCounter = 0;
 
     // Contains the config of step '0' if present.
-    this.initialStep = null;
+    this.initialQueue = null;
     this.validateIO();
   }
+
+  get initialStep() { return this.initialQueue ? this.initialQueue.steps[0] : null }
 
   validateIO() {
     for (const queue in this.pipeIO.queues) {
@@ -156,7 +158,7 @@ class MSAPipeline {
       for (const step in queueConfig.steps) {
         const stepConfig = queueConfig.steps[step];
         if (step === '0') {
-          this.initialStep = stepConfig;
+          this.initialQueue = queueConfig;
 
           if (typeof stepConfig.outQueue === 'undefined') {
             throw new Error('Initial step does not have an output!');
@@ -190,9 +192,10 @@ class MSAPipeline {
     }
   }
 
-  handleError(data, err) {
+  handleError(err, data, queueConfig, stepConfig) {
     // TODO: Add error mechanism for each pipeline. Default if using gateway is to return the error to the user.
     // Move to job based invocation?
+    console.error(`Callback function "${stepConfig.fn}" failed`)
     console.error(err);
   }
 
@@ -263,7 +266,7 @@ class MSAPipeline {
       try {
         output = await this.functions[stepConfig.fn]({...data, state: undefined, input: input, pipeline: this }, ...stepConfig.extraArgs);
       } catch (err) {
-        this.handleError(data, err);
+        this.handleError(err, data, queueConfig, stepConfig);
         return;
       }
 
@@ -289,7 +292,12 @@ class MSAPipeline {
 
 
     if (this.initialStep) {
-      await this.functions[this.initialStep.fn]({ pipeline: this, start: true }, ...this.initialStep.extraArgs);
+      try {
+        await this.functions[this.initialStep.fn]({ pipeline: this, start: true }, ...this.initialStep.extraArgs);
+      } catch (err) {
+        this.handleError(err, { start: true }, this.initialQueue, this.initialStep);
+        return;
+      }
     }
   }
 
@@ -297,7 +305,12 @@ class MSAPipeline {
     this.started = false;
 
     if (this.initialStep) {
-      await this.functions[this.initialStep.fn]({ pipeline: this, start: false }, ...this.initialStep.extraArgs);
+      try {
+        await this.functions[this.initialStep.fn]({ pipeline: this, start: false }, ...this.initialStep.extraArgs);
+      } catch (err) {
+        this.handleError(err, { start: false }, this.initialQueue, this.initialStep);
+        return;
+      }
     }
   }
 
