@@ -22,7 +22,7 @@ class Gateway:
   def getConfig(self):
     return self.config
 
-gatewayConf = Story(f'^http (get |post |put |patch |delete )?request path {sobj} port {iobj} ', lambda config, match, method, path, port: Gateway(path, objParse(port), method))
+gatewayConf = Story(f'^http (get|post|put|patch|delete)? ?request path {sobj} port {iobj} ', lambda config, match, method, path, port: Gateway(path, objParse(port), method))
 gatewayConf.register(Story(f'(?: and )?parameter {sobj} of type {sobj}', lambda config, match, param, type: config.paramOfType(param, type)))
 
 stories = [
