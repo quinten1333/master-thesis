@@ -1,0 +1,29 @@
+name: x+2-10
+endpoint: amqp://rabbitmq
+datasets:
+userStories:
+- given: a http get request with path "/" on port 3000 with parameter "input" which is of type "number"
+  then:
+  - do: set state `2`
+    post:
+      set: two
+  - do: set state `10`
+    post:
+      set: ten
+  - pre:
+      select:
+      - input as a
+      - two as b
+    do: plus
+    post:
+      set: input
+  - pre:
+      select:
+      - input as a
+      - ten as b
+    do: minus
+  - respond to the http request on port 3000
+- given: a http request with path "/identity" on port 3000 with parameter "input" which is of type "number"
+  then:
+  - unpack "input"
+  - respond to the http request on port 3000

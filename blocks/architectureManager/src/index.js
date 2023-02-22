@@ -21,10 +21,7 @@ const config = JSON.parse(process.env.IOConfig);
 const conn = new AMQPConn(config.endpoint);
 
 let archId = -1;
-const architectures = {
-  [-1]: new Architecture(conn, -1, 'Testing', {}, yaml.load(`- steps:\n  - block: gateway\n    fn: listen\n    extraArgs:\n    - port: 3000\n      routes:\n      - method: get\n        path: /\n        params:\n          params:\n            type: number\n  - block: util\n    fn: unpack\n    extraArgs:\n    - params\n  - block: util\n    fn: plus\n    extraArgs:\n    - 2\n  - block: util\n    fn: min\n    extraArgs:\n    - 10\n  - block: gateway\n    fn: reply\n    extraArgs:\n    - port: 3000\n- steps:\n  - block: gateway\n    fn: listen\n    extraArgs:\n    - port: 3000\n      routes:\n      - method: get\n        path: /identity\n        params:\n          params:\n            type: number\n  - block: util\n    fn: unpack\n    extraArgs:\n    - params\n  - block: gateway\n    fn: reply\n    extraArgs:\n    - port: 3000\n`), 'amqp://rabbitmq'),
-  [-2]: new Architecture(conn, -2, 'Testing mul, div, plus, min', {}, yaml.load(`- steps:\n  - block: gateway # The first step is special.\n    fn: listen     # it is called directly at the start of IO.\n    extraArgs:\n    - port: 3000 # Start a web server on port 3000\n      routes:\n      - method: get\n        path: /all\n        params:\n          params:\n            type: number\n  - block: util\n    fn: unpack\n    extraArgs:\n    - params\n  - block: util # Name of the service\n    fn: mul # function that is registered that is called\n    extraArgs:\n    - 30\n  - block: util\n    fn: div\n    extraArgs:\n    - 30\n  - block: util\n    fn: plus\n    extraArgs:\n    - 5\n  - block: util\n    fn: min\n    extraArgs:\n    - 5\n  - block: gateway\n    fn: reply\n    extraArgs:\n    - port: 3000 # Send back a reply using the webserver on this port`), 'amqp://rabbitmq'),
-};
+const architectures = {};
 
 const createApp = (port) => {
   const app = express();

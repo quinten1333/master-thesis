@@ -1,0 +1,43 @@
+name: x*30/30+5-5
+endpoint: amqp://rabbitmq
+datasets:
+userStories:
+- given: a http get request with path "/all" on port 3000 with parameter "input" which is of type "number"
+  then:
+  - do: set state `30`
+    post:
+      set: thirty
+  - do: set state `5`
+    post:
+      set: five
+  - pre:
+      select:
+      - input as a
+      - thirty as b
+    do: times
+    post:
+      set: input
+  - pre:
+      select:
+      - input as a
+      - thirty as b
+    do: devide by
+    post:
+      set: input
+  - log state
+  - pre:
+      select:
+      - input as a
+      - five as b
+    do: plus
+    post:
+      set: input
+  - pre:
+      select:
+      - input as a
+      - five as b
+    do: minus
+    post:
+      set: input
+  - unpack "input"
+  - respond to the http request on port 3000
