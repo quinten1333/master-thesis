@@ -1,4 +1,5 @@
 import re
+from sys import stderr
 
 def lmap(*args, **kwargs):
   return [*map(*args, **kwargs)]
@@ -52,7 +53,24 @@ def normalizeStory(userStory):
         'do': step
       }
 
+
     if 'given' in step:
+      if not step['given']:
+        print('Warning: Empty condition found. Skipping it')
+        return None
+      if 'then' not in step or not step['then']:
+        print(f'Warning: Condition "{step["given"]}" has no steps. Skipping it.')
+        return None
+
+      then = [*filter(lambda val: val, step['then'])] # Filter empty steps
+      if len(step['then']) != len(then):
+        print(f'Warning: Empty step in condition "{step["given"]}". Ignoring it.', file=stderr)
+      step['then'] = then
+
+      if len(step['then']) == 0: # Filter stories with no steps after filtering
+        print(f'Warning: Condition "{step["given"]}" has no steps. Skipping it.', file=stderr)
+        return None
+
       return normalizeStory(step)
 
     newStep = {**step}
@@ -62,5 +80,5 @@ def normalizeStory(userStory):
 
   return {
     'condition': { 'do': userStory['given'] },
-    'steps': lmap(_normalizeStep, userStory['then'])
+    'steps': [*filter(lambda val: val, map(_normalizeStep, userStory['then']))]
   }
