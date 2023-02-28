@@ -223,7 +223,7 @@ def controllFlowGraphKeywords(flattenedStory: dict) -> dict:
         if target['op'] == 'stop':
           del cond['outStep']
         elif target['op'] == 'goto':
-          cond['outStep'] = target['step']
+          cond['outStep'] = int(target['step'])
 
 
   return flattenedStory

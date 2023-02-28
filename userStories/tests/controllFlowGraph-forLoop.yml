@@ -7,32 +7,32 @@ datasets:
     db: thesisFairPlatform
     collection: users
 userStories:
-- given: a http get request with path "/times" on port 3000 with parameter "a" of type "number" and parameter "b" of type "number"
+- given: a http get request with path "/times" on port 3000 with parameter "fst" of type "number" and parameter "snd" of type "number"
   then:
-  - do: set state 1
+  - do: set state `1`
     post:
       set: inc
-  - do: set state 0
+  - do: set state `0`
     post:
       set: res
 
   - pre:
       select:
-      - res as a
-      - b
+      - res as fst
+      - snd
     do: plus
     post:
       set: res
   - pre:
       select:
-      - a
-      - inc as b
+      - fst
+      - inc as snd
     do: minus
     post:
-      set: a
+      set: fst
 
   - log state
-  - given: a equals 0
+  - given: fst equals `0`
     then:
     - pre:
         pick: res
