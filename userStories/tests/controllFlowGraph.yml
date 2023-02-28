@@ -19,9 +19,16 @@ userStories:
   - given: dbpwd equals `undefined` # Should be properly handled
     then:
     - set state "User not found" # Should continue with next non-conditional line
-    - given: state equals "Hello there"
+    - given: state equals "Second level"
       then:
+      - set state "This one should not dissapear"
+      - given: state equals "tirth level"
+        then:
+        - set state "This one should not dissapear either"
       - stop
+  - given: dbpwd equals "hi"
+    then:
+    - set state "What a simple password"
   - log state
   - respond to the http request on port 3000
 

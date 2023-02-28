@@ -17,6 +17,25 @@ def printNormalStories(userStories: list):
       print(i + 1, '-', step)
     print()
 
+def printFoldedCFG(userStories: list):
+  def printStory(story: dict, depth=0):
+    for stepId, step in story.items():
+      if 'outCondition' in step:
+        outCondition = step['outCondition']
+        step = { **step }
+        del step['outCondition']
+
+        print(' ' * depth, stepId, '-', step)
+        for condStory in outCondition:
+          printStory(condStory, depth + 2)
+
+        continue
+      print(' ' * depth, stepId, '-', step)
+
+  for story in userStories:
+    printStory(story)
+    print()
+
 def printStories(userStories: list):
   for story in userStories:
     for i, step in enumerate(story):
@@ -76,7 +95,7 @@ def validateStory(userStory):
     check_step(step)
 
 
-def flattenStory(userStory: list, stepOffset=0, retStep=-1) -> dict:
+def genCFG(userStory: list) -> dict: # TODO: Add offset to goto statements
   """
     Make a proper graph from the stories.
     This is done by doing two passes. First resolving the local graph which will
@@ -86,76 +105,83 @@ def flattenStory(userStory: list, stepOffset=0, retStep=-1) -> dict:
     The step list is converted into a dictionary to keep the id's stable, hence
      the function returns a dictionary.
   """
-  stepsDict = {i + stepOffset: step for i, step in enumerate(userStory)}
-  steps = len(userStory) + stepOffset
+  stepCount = 0
 
-  # Add offset to goto statements
-
-  def getConditionsAhead(startId, firstPass=True, retStep=-1):
-    """
-      On first pass it only returns the amount of condition "steps" there are ahead.
-      On second pas it recursively enters all conditions, resolves their graphs
-      and adds them to the stepsDict, flattening the structure into a
-      conditional directed graph.
-    """
-    nonlocal stepsDict, steps
-
+  def getNextCommand(stepsDict, startId):
     id = startId + 1
-    conditions = []
-    newStepsDict = { **stepsDict }
-    newSteps = steps
-    while True:
-      while id not in stepsDict and id < steps:
-        id += 1
-      if not (id < steps and 'condition' in stepsDict[id]):
-        break
-      condition = stepsDict[id]
-
-      if not firstPass:
-        storySteps = flattenStory(condition['steps'], newSteps, retStep)
-        outStep = newSteps
-        newSteps += len(condition['steps'])
-        newStepsDict = { **newStepsDict, **storySteps}
-
-        conditions.append({
-          'do': condition['condition']['do'],
-          'outStep': outStep,
-        })
-        del newStepsDict[id]
-
+    while id < stepCount and id in stepsDict and 'condition' in stepsDict[id]:
       id += 1
 
-    if firstPass:
-      return id - startId - 1
+    if id == stepCount:
+      return None
 
-    stepsDict = newStepsDict
-    steps = newSteps
+    return id
 
-    return conditions
+  def resolveLocal(stepsDict, returnStep):
+    for stepId, step in stepsDict.items():
+      outStep = getNextCommand(stepsDict, stepId)
+      if outStep:
+        step['outStep'] = outStep
 
+  def addCondition(step, condition):
+    if 'outCondition' not in step:
+      step['outCondition'] = []
 
-  for stepId, step in stepsDict.items():
-    if stepId == steps - 1:
-      if retStep > 0:
-        step['outStep'] = retStep
+    step['outCondition'].append(condition)
+
+  def _genCFG(userStory, returnStep=None):
+    nonlocal stepCount
+
+    if 'condition' not in userStory or 'steps' not in userStory:
+      print('Internal error: Did not receive a user story', file=sys.stderr)
+      exit(0)
+
+    steps = [userStory['condition'], *userStory['steps']]
+    stepsDict = {i + stepCount: step for i, step in enumerate(steps)}
+    stepCount += len(steps)
+
+    resolveLocal(stepsDict, returnStep)
+
+    lastCommand = 0
+    for stepId, step in { **stepsDict }.items(): # Move substories to command outCondition
+      if 'condition' in step:
+        addCondition(stepsDict[lastCommand], _genCFG(step, getNextCommand(stepsDict, stepId) or returnStep))
+        del stepsDict[stepId]
+        continue
+
+      lastCommand = stepId
+
+    if returnStep:
+      stepsDict[lastCommand]['outStep'] = returnStep
+
+    return stepsDict
+
+  return _genCFG(userStory)
+
+def unfoldCFG(stepsDict):
+  id = 0
+  while id <= max(stepsDict.keys()):
+    if id not in stepsDict:
+      id += 1
       continue
 
-    step['outStep'] = stepId + getConditionsAhead(stepId, True) + 1
+    step = stepsDict[id]
+    if 'outCondition' in step:
+      for sid, story in enumerate(step['outCondition']):
+        cid = min(story.keys())
+        condition = story[cid]
+        del story[cid]
 
-  # print('firstPass', stepsDict)
+        step['outCondition'][sid] = {
+          'do': condition['do'],
+          'outStep': condition['outStep'],
+        }
+        stepsDict = { **stepsDict, **story }
 
-  stepsSnapshot = steps # Needed because steps counter will change during loop
-  for stepId, step in stepsDict.items():
-    if stepId == stepsSnapshot - 1:
-      continue
-
-    conditionsAhead = getConditionsAhead(stepId, False, step['outStep'])
-    if conditionsAhead:
-      stepsDict[stepId]['outCondition'] = conditionsAhead
-
-  # print('Second pass', stepsDict)
+    id += 1
 
   return stepsDict
+
 
 def getTargets(story: dict) -> list:
   targets = []
@@ -225,7 +251,6 @@ def parseStory(cfgStory: dict) -> dict:
       **step,
       **conf,
     }
-    del step['do']
 
     steps[stepId] = step
 
@@ -247,24 +272,27 @@ if __name__ == "__main__":
   tokenizedStories = [tokenizeStory(userStory) for userStory in normalStories]
   if command == 'tokenized': printNormalStories(tokenizedStories); exit(0)
 
-  flattenedStories = [flattenStory([userStory['condition'], *userStory['steps']]) for userStory in tokenizedStories]
-  if command == 'flattened': printStoriesDict(flattenedStories); exit(0)
+  cfgStories = [genCFG(userStory) for userStory in tokenizedStories]
+  if command == 'cfg': printFoldedCFG(cfgStories); exit(0)
 
-  cfgStories = [cleanupCFG(controllFlowGraphKeywords(flattenedStory)) for flattenedStory in flattenedStories]
-  if command == 'cfg': printStoriesDict(cfgStories); exit(0)
+  unfoldedStories = [unfoldCFG(userStory) for userStory in cfgStories]
+  if command == 'cfgUnfolded': printStoriesDict(unfoldedStories); exit(0)
+
+  cfgCleanStories = [cleanupCFG(controllFlowGraphKeywords(story)) for story in unfoldedStories]
+  if command == 'cfgClean': printStoriesDict(cfgCleanStories); exit(0)
 
   conditionStories.loadDir('condition')
-  cfgCondParsedStories = [parseConditions(cfgStory) for cfgStory in cfgStories]
+  cfgCondParsedStories = [parseConditions(story) for story in cfgCleanStories]
   if command == 'conditionsParsed': printStoriesDict(cfgCondParsedStories); exit(0)
 
   serviceStories.loadDir('service')
-  pipelines = [parseStory(userStory) for userStory in cfgStories]
+  pipelines = [parseStory(userStory) for userStory in cfgCondParsedStories]
   if command == 'pipelines': print(pipelines); exit(0)
 
   if command:
     print('Warning: Command not found')
 
-  printStoriesDict(cfgStories)
+  printStoriesDict(cfgCleanStories)
   doc['pipelines'] = pipelines
   with open('compiled.yml', 'w') as outFile:
     yaml.dump(doc, outFile)
