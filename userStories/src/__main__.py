@@ -96,15 +96,11 @@ def validateStory(userStory):
     check_step(step)
 
 
-def genCFG(userStory: list) -> dict: # TODO: Add offset to goto statements
+def genCFG(userStory: list) -> dict:
   """
-    Make a proper graph from the stories.
-    This is done by doing two passes. First resolving the local graph which will
-    be followed if all the conditions turn out to be false. In a second pass
-    all conditions are entered recursively, resolved and added to the stepsDict.
-
-    The step list is converted into a dictionary to keep the id's stable, hence
-     the function returns a dictionary.
+    Make a controll flow graph from the list of steps by resolving the next
+    step, conditions and goto statements. All conditions are moved into the
+    command step that will execute the condition.
   """
   stepCount = 0
 
@@ -129,7 +125,10 @@ def genCFG(userStory: list) -> dict: # TODO: Add offset to goto statements
       if 'condition' not in stepsDict[id]:
         break
 
-      # Dict is needed because the system currently expects the full story to be moved to the conditions array.
+      # Dict is needed because the system currently expects the full story to
+      # be moved to the conditions array but here we are only doing a link.
+      # Because this is pass by reference the correct outStep will be added
+      # later in the process.
       conditions.append({ -1: stepsDict[id]['condition'] })
       id += 1
 
@@ -169,6 +168,9 @@ def genCFG(userStory: list) -> dict: # TODO: Add offset to goto statements
         addCondition(stepsDict[lastCommand], _genCFG(step, getNextCommand(stepsDict, stepId) or returnStep, getReturnConditions(stepsDict, stepId) or returnConditions))
         del stepsDict[stepId]
         continue
+
+      if 'op' in step and step['op'] == 'goto':
+        step['step'] = int(step['step']) + min(stepsDict.keys()) # Offset with id of condition from this story
 
       lastCommand = stepId
 
