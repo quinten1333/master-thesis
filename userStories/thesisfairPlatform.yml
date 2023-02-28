@@ -19,9 +19,13 @@ userStories:
   - given: dbpwd equals `undefined`
     then:
     - set state "User not found"
+    - respond to the http request on port 3000
+    - stop
   - given: password not equals dbpwd
     then:
     - set state "Incorrect password"
+    - respond to the http request on port 3000
+    - stop
   - log state
   - respond to the http request on port 3000
 
