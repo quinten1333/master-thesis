@@ -27,6 +27,7 @@ def printFoldedCFG(userStories: list):
 
         print(' ' * depth, stepId, '-', step)
         for condStory in outCondition:
+          print('--' * depth, '--')
           printStory(condStory, depth + 2)
 
         continue
@@ -109,13 +110,33 @@ def genCFG(userStory: list) -> dict: # TODO: Add offset to goto statements
 
   def getNextCommand(stepsDict, startId):
     id = startId + 1
-    while id < stepCount and id in stepsDict and 'condition' in stepsDict[id]:
+    while id < stepCount and (id not in stepsDict or 'condition' in stepsDict[id]):
       id += 1
 
     if id == stepCount:
       return None
 
     return id
+
+  def getReturnConditions(stepsDict, startId):
+    id = startId + 1
+    conditions = []
+    while id < stepCount:
+      if id not in stepsDict:
+        id += 1
+        continue
+
+      if 'condition' not in stepsDict[id]:
+        break
+
+      # Dict is needed because the system currently expects the full story to be moved to the conditions array.
+      conditions.append({ -1: stepsDict[id]['condition'] })
+      id += 1
+
+    if len(conditions) == 0:
+      return None
+
+    return conditions
 
   def resolveLocal(stepsDict, returnStep):
     for stepId, step in stepsDict.items():
@@ -129,7 +150,7 @@ def genCFG(userStory: list) -> dict: # TODO: Add offset to goto statements
 
     step['outCondition'].append(condition)
 
-  def _genCFG(userStory, returnStep=None):
+  def _genCFG(userStory, returnStep=None, returnConditions=None):
     nonlocal stepCount
 
     if 'condition' not in userStory or 'steps' not in userStory:
@@ -145,7 +166,7 @@ def genCFG(userStory: list) -> dict: # TODO: Add offset to goto statements
     lastCommand = 0
     for stepId, step in { **stepsDict }.items(): # Move substories to command outCondition
       if 'condition' in step:
-        addCondition(stepsDict[lastCommand], _genCFG(step, getNextCommand(stepsDict, stepId) or returnStep))
+        addCondition(stepsDict[lastCommand], _genCFG(step, getNextCommand(stepsDict, stepId) or returnStep, getReturnConditions(stepsDict, stepId) or returnConditions))
         del stepsDict[stepId]
         continue
 
@@ -153,6 +174,9 @@ def genCFG(userStory: list) -> dict: # TODO: Add offset to goto statements
 
     if returnStep:
       stepsDict[lastCommand]['outStep'] = returnStep
+
+    if returnConditions:
+      stepsDict[lastCommand]['outCondition'] = returnConditions
 
     return stepsDict
 
