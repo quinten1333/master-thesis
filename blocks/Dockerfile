@@ -15,5 +15,6 @@ COPY ./src ./src
 RUN npm run build
 ENV NODE_ENV=production
 
+COPY --from=libs . /app/node_modules/@amicopo
 
 ENTRYPOINT npm start

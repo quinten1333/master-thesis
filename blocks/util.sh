@@ -15,7 +15,12 @@ if [[ -z "$block" ]]; then
 fi
 
 function build() {
-  docker buildx build -f ./Dockerfile --build-context libs=../libs -t ghcr.io/quinten1333/mt-blocks:$1 $1
+  dockerfile="./Dockerfile"
+  if [[ -e "$1/Dockerfile" ]]; then
+    dockerfile="$1/Dockerfile"
+  fi
+
+  docker buildx build -f $dockerfile --build-context libs=../libs -t ghcr.io/quinten1333/mt-blocks:$1 $1
 }
 
 function push() {

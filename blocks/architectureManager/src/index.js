@@ -23,7 +23,6 @@ const createApp = (port) => {
   app.use(morgan('dev'));
   app.use(express.json({ }));
   app.use(express.urlencoded({ extended: true }));
-  // app.use(express.static('src/static'));
 
   if (process.env.NODE_ENV === 'development') {
     app.use((req, res, next) => {
@@ -36,6 +35,7 @@ const createApp = (port) => {
   }
 
   app.use('/api/architecture', routeApiArch);
+  app.use(express.static('static'));
 
   // catch 404 and forward to error handler
   app.use((req, res, next) => {
