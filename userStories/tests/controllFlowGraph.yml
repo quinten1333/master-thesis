@@ -1,4 +1,4 @@
-name: Thesis Fair Platform
+name: CFG with all edge cases
 endpoint: amqp://rabbitmq
 datasets:
   db:

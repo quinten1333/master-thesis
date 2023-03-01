@@ -1,4 +1,4 @@
-name: Thesis Fair Platform
+name: Nested Goto
 endpoint: amqp://rabbitmq
 datasets:
   db:
@@ -20,15 +20,15 @@ userStories:
     then:
     - pre:
         select:
-        - res as fst
-        - snd
+        - res as a
+        - snd as b
       do: plus
       post:
         set: res
     - pre:
         select:
-        - fst
-        - inc as snd
+        - fst as a
+        - inc as b
       do: minus
       post:
         set: fst
@@ -47,13 +47,13 @@ userStories:
 
 
 
-# def times(a, b):
+# def times(fst, snd):
 # inc = 1
 # res = 0
 #
-# res = res + b
-# a = a - 1
-# if a == 0:
+# res = res + snd
+# fst = fst - 1
+# if fst == 0:
 #   respond res
 #   stop
 # goto: 3

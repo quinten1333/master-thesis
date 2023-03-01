@@ -1,4 +1,4 @@
-name: Thesis Fair Platform
+name: Root level goto
 endpoint: amqp://rabbitmq
 datasets:
   db:
