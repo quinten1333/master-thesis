@@ -1,0 +1,59 @@
+name: For loop
+endpoint: amqp://rabbitmq
+datasets:
+  db:
+    type: mongodb
+    url: mongodb://dataset-mongodb
+    db: thesisFairPlatform
+    collection: users
+userStories:
+- given: a http get request with path "/times" on port 3000 with parameter "fst" of type "number" and parameter "snd" of type "number" and parameter "operation" of type "string"
+  then:
+  - do: set state `1`
+    post:
+      set: inc
+  - do: set state `0`
+    post:
+      set: res
+
+  - given: operation equals "multiply"
+    then:
+    - pre:
+        select:
+        - res as a
+        - snd as b
+      do: plus
+      post:
+        set: res
+    - pre:
+        select:
+        - fst as a
+        - inc as b
+      do: minus
+      post:
+        set: fst
+
+    - log state
+    - given: fst equals `0`
+      then:
+      - pre:
+          pick: res
+        do: respond to the http request on port 3000
+      - stop
+    - goto 1
+
+  - set state "Operation not found"
+  - respond to the http request on port 3000
+
+
+
+# def times(fst, snd):
+# inc = 1
+# res = 0
+#
+# res = res + snd
+# fst = fst - 1
+# if fst == 0:
+#   respond res
+#   stop
+# goto: 3
