@@ -49,16 +49,16 @@ def printStoriesDict(userStories: dict):
       print(stepId, '-', storyDict[stepId])
     print()
 
-def handleInput():
-  if len(sys.argv) < 2:
+def handleInput(argv):
+  if len(argv) < 2:
     print('Please give input file', file=sys.stderr)
     sys.exit(1)
 
   command = None
-  if len(sys.argv) >= 3:
-    command = sys.argv[2]
+  if len(argv) >= 3:
+    command = argv[2]
 
-  inFile = sys.argv[1] if sys.argv[1] != '--' else '/dev/stdin'
+  inFile = argv[1] if argv[1] != '--' else '/dev/stdin'
   with open(inFile, 'r') as file:
     doc = yaml.safe_load(file)
 
@@ -284,8 +284,8 @@ def parseStory(cfgStory: dict) -> dict:
     'steps': steps
   }
 
-if __name__ == "__main__":
-  [doc, command] = handleInput()
+def main(argv, debug=False):
+  [doc, command] = handleInput(argv)
   context.set(doc)
 
 
@@ -314,11 +314,15 @@ if __name__ == "__main__":
   serviceStories.loadDir('service')
   pipelines = [parseStory(userStory) for userStory in cfgCondParsedStories]
   if command == 'pipelines': print(pipelines); exit(0)
+  doc['pipelines'] = pipelines
 
   if command:
     print('Warning: Command not found')
 
-  printStoriesDict(cfgCleanStories)
-  doc['pipelines'] = pipelines
+  if debug: printStoriesDict(cfgCleanStories)
+  return doc
+
+if __name__ == "__main__":
+  doc = main(sys.argv, debug=True)
   with open('compiled.yml', 'w') as outFile:
     yaml.dump(doc, outFile)
