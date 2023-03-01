@@ -20,7 +20,7 @@ def resolveIdentifierOrObj(input):
     if value == 'undefined':
       return { 'type': 'keyword', 'value': value}
 
-    return { 'type': 'value', 'value': objParse(value) }
+    return { 'type': 'value', 'value': json.dumps(objParse(value)) } # Load and dump to validate it is proper JSON.
 
   return { 'type': 'identifier', 'value': input }
 

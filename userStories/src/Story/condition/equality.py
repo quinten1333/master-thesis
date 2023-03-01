@@ -9,7 +9,7 @@ def genCompareFunction(a, op, b):
         elif res['type'] == 'keyword':
            return res['value']
 
-        return f'"{res["value"]}"'
+        return res["value"]
 
     return f'(state) => {toJSVar(a)} {op} {toJSVar(b)}'
 
