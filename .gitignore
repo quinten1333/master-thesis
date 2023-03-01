@@ -2,6 +2,7 @@
 **/built/**
 reboot.js
 *compiled.yml
+userStories/*.jpg
 
 **/__pycache__/**
 
