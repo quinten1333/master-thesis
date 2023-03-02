@@ -1,0 +1,5 @@
+PyYAML
+nltk
+
+fastapi
+uvicorn[standard]

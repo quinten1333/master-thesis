@@ -21,12 +21,7 @@ services:
       PORT: 3002
 
   architectureManager:
-    image: ghcr.io/quinten1333/mt-blocks:architectureManager-dev
-    build:
-      context: blocks/architectureManager
-      dockerfile: ./Dockerfile-dev
-      args:
-        - NODE_ENV=development
+    image: node:latest
     entrypoint: npm run dev
     working_dir: /app
     ports:
@@ -34,14 +29,20 @@ services:
     volumes:
       - ./blocks/architectureManager/:/app
       - ./libs:/app/node_modules/@amicopo
-      - ./libs/userStoryCompiler:/python/compiler
-      - ./libs/userStoryDrawer:/python/drawer
     environment:
-      PORT: 80
       NODE_ENV: development
       IOConfig: '{ "endpoint": "amqp://rabbitmq" }'
       DEBUG: architectureManager
       DEBUG_COLORS: true
+
+  userStoryCompiler:
+    image: ghcr.io/quinten1333/mt-blocks:userStoryCompiler
+    build: blocks/userStoryCompiler
+    command: --reload
+    ports:
+      - 3003:80
+    volumes:
+      - ./blocks/userStoryCompiler/:/app
 
   gateway:
     image: node:latest

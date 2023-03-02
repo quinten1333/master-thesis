@@ -1,4 +1,0 @@
-FROM alpine:latest
-RUN apk add --no-cache npm nodejs python3 py3-pip
-LABEL org.opencontainers.image.source https://github.com/quinten1333/master-thesis
-ENV NODE_ENV=development
