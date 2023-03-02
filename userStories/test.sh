@@ -1,6 +1,6 @@
 echo "reboot" > ../libs/msamessaging/reboot.js
 
-python ../libs/userStoryCompiler/run.py thesisfairPlatform.yml $@
+python ../blocks/userStoryCompiler/src/run.py thesisfairPlatform.yml $@
 
 if [ $1 ]; then
   exit

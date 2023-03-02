@@ -49,19 +49,7 @@ def printStoriesDict(userStories: dict):
       print(stepId, '-', storyDict[stepId])
     print()
 
-def handleInput(argv):
-  if len(argv) < 2:
-    print('Please give input file', file=sys.stderr)
-    sys.exit(1)
-
-  command = None
-  if len(argv) >= 3:
-    command = argv[2]
-
-  inFile = argv[1] if argv[1] != '--' else '/dev/stdin'
-  with open(inFile, 'r') as file:
-    doc = yaml.safe_load(file)
-
+def validateInput(doc):
   if 'name' not in doc :
     raise BaseException('No name given in YAML doc')
   if 'endpoint' not in doc :
@@ -72,8 +60,6 @@ def handleInput(argv):
     raise BaseException('No userStories given in YAML doc')
 
   # TODO: Validate structure of datasets and userStories
-
-  return [doc, command]
 
 
 def validateStory(userStory):
@@ -284,8 +270,9 @@ def parseStory(cfgStory: dict) -> dict:
     'steps': steps
   }
 
-def main(argv, debug=False):
-  [doc, command] = handleInput(argv)
+def main(ymlDoc, command=None, debug=False):
+  doc = yaml.safe_load(ymlDoc)
+  validateInput(doc)
   context.set(doc)
 
 
@@ -322,7 +309,22 @@ def main(argv, debug=False):
   if debug: printStoriesDict(cfgCleanStories)
   return doc
 
+def cli(argv, debug=False):
+  if len(argv) < 2:
+    print('Please give input file', file=sys.stderr)
+    sys.exit(1)
+
+  command = None
+  if len(argv) >= 3:
+    command = argv[2]
+
+  inFile = sys.argv[1] if sys.argv[1] != '--' else '/dev/stdin'
+  with open(inFile, 'r') as file:
+    ymlDoc = file.read()
+
+  return main(ymlDoc, command, debug)
+
 if __name__ == "__main__":
-  doc = main(sys.argv, debug=True)
+  doc = cli(sys.argv, debug=True)
   with open('compiled.yml', 'w') as outFile:
     yaml.dump(doc, outFile)
