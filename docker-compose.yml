@@ -30,6 +30,7 @@ services:
       - ./blocks/architectureManager/:/app
       - ./libs:/app/node_modules/@amicopo
     environment:
+      PORT: 80
       NODE_ENV: development
       IOConfig: '{ "endpoint": "amqp://rabbitmq" }'
       DEBUG: architectureManager
