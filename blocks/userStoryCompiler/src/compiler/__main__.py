@@ -270,10 +270,9 @@ def parseStory(cfgStory: dict) -> dict:
     'steps': steps
   }
 
-def main(ymlDoc, command=None, debug=False):
-  doc = yaml.safe_load(ymlDoc)
+def main(doc, command=None, debug=False):
   validateInput(doc)
-  context.set(doc)
+  context.set(doc) # Not thread safe
 
 
   normalStories = [normalizeStory(userStory) for userStory in context.userStories]
@@ -322,7 +321,7 @@ def cli(argv, debug=False):
   with open(inFile, 'r') as file:
     ymlDoc = file.read()
 
-  return main(ymlDoc, command, debug)
+  return main(yaml.safe_load(ymlDoc), command, debug)
 
 if __name__ == "__main__":
   doc = cli(sys.argv, debug=True)
