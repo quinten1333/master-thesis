@@ -4,9 +4,13 @@ export default class Architecture {
 
     this.id = id;
     this.name = arch.name;
-    this.datasets = arch.datasets;
+    this.datasets = arch.datasets || [];
     this.pipelines = arch.pipelines;
     this.endpoint = arch.endpoint;
+
+    if (!arch.name) { throw new Error('Architecture requires a name property'); }
+    if (!arch.pipelines) { throw new Error('Architecture requires a pipelines property'); }
+    if (!arch.endpoint) { throw new Error('Architecture requires a endpoint property'); }
 
     this.IOConfig = this.generateIOConfig();
     this.state = 0
