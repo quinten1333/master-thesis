@@ -1,6 +1,8 @@
 import re
 import json
 
+from ..exceptions import *
+
 debug = False
 
 sobj = '`"([^`]*)"`'
@@ -11,7 +13,7 @@ def objParse(obj):
   try:
     return json.loads(obj)
   except:
-    raise BaseException(f'Failed to parse JSON object from input: {obj}')
+    raise ParseError(f'Failed to parse JSON object from input: {obj}')
 objCompiled = re.compile(obj)
 def resolveIdentifierOrObj(input):
   res = objCompiled.match(input)

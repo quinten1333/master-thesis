@@ -1,3 +1,5 @@
+from .exceptions import *
+
 class Doc:
   def set(self, doc):
     self.doc = doc
@@ -24,7 +26,7 @@ class Doc:
   def findDataset(self, name):
     dataset = self.datasets[name]
     if not dataset:
-      raise BaseException(f'Dataset with name {name} not found!')
+      raise CompileError(f'Dataset with name {name} not found!')
 
     return dataset
 

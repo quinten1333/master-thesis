@@ -1,6 +1,8 @@
 import re
 from sys import stderr
 
+from .exceptions import *
+
 def lmap(*args, **kwargs):
   return [*map(*args, **kwargs)]
 
@@ -23,7 +25,7 @@ def normalizeKeyword(text):
 def normalizeSelection(text):
     split = text.split(' as ')
     if len(split) > 2:
-      raise BaseException('Too many arguments')
+      raise ParseError(f'Text "{text}" contains multiple " as " statements.')
 
     return {
       'from': split[0],

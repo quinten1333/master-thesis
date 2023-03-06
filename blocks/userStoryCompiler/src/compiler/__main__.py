@@ -2,6 +2,7 @@ import sys
 import yaml
 from collections import defaultdict
 
+from .exceptions import *
 from .Context import context
 from .normalize import normalizeStory
 from .TextAnalyser import tokenizeStory
@@ -51,13 +52,13 @@ def printStoriesDict(userStories: dict):
 
 def validateInput(doc):
   if 'name' not in doc :
-    raise BaseException('No name given in YAML doc')
+    raise InputError('No name given in YAML doc')
   if 'endpoint' not in doc :
-    raise BaseException('No endpoint given in YAML doc')
+    raise InputError('No endpoint given in YAML doc')
   if 'datasets' not in doc:
-    raise BaseException('No datasets given in YAML doc')
+    raise InputError('No datasets given in YAML doc')
   if 'userStories' not in doc :
-    raise BaseException('No userStories given in YAML doc')
+    raise InputError('No userStories given in YAML doc')
 
   # TODO: Validate structure of datasets and userStories
 
@@ -67,16 +68,16 @@ def validateStory(userStory):
     if 'condition' in step:
       if 'steps' in step:
         if 'condition' in step['steps'][0]:
-          raise BaseException(f'Cannot nest two conditions directly after each other.\nFirst condition {step["condition"]}\nSecond condition {step["steps"][0]["condition"]}')
+          raise InputError(f'Cannot nest two conditions directly after each other.\nFirst condition {step["condition"]}\nSecond condition {step["steps"][0]["condition"]}')
 
         for childStep in step['steps']:
           check_step(childStep)
 
   if 'condition' not in userStory:
-    raise BaseException('User story missing condition in given')
+    raise InputError('User story missing condition in given')
 
   if 'steps' not in userStory:
-    raise BaseException('User story missing steps in then')
+    raise InputError('User story missing steps in then')
 
   for step in userStory['steps']:
     check_step(step)

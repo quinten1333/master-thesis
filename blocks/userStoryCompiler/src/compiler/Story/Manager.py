@@ -1,6 +1,8 @@
 from pathlib import Path
 import importlib
 
+from ..exceptions import *
+
 class StoryManager:
   stories = []
   def registerStories(self, stories: list) -> None:
@@ -28,4 +30,4 @@ class StoryManager:
           return conf.getConfig()
         return conf
 
-    raise BaseException(f'Sentence "{inputStory}" could not be matched with a story')
+    raise ParseError(f'Sentence "{inputStory}" could not be matched with a story')
