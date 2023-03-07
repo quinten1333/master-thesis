@@ -1,58 +1,92 @@
 export default class Architecture {
-  constructor(conn, id, name, steps, endpoint) {
+  constructor(conn, id, arch) {
     this.conn = conn;
 
     this.id = id;
-    this.name = name;
-    this.steps = steps;
-    this.endpoint = endpoint;
+    this.name = arch.name;
+    this.datasets = arch.datasets || [];
+    this.pipelines = arch.pipelines;
+    this.endpoint = arch.endpoint;
+
+    if (!arch.name) { throw new Error('Architecture requires a name property'); }
+    if (!arch.pipelines) { throw new Error('Architecture requires a pipelines property'); }
+    if (!arch.endpoint) { throw new Error('Architecture requires a endpoint property'); }
 
     this.IOConfig = this.generateIOConfig();
+    this.state = 0
   }
 
-  namespace(str) {
-    return `arch-${this.id}-${str}`
+  json() {
+    return {
+      name: this.name,
+      datasets: this.datasets,
+      pipelines: this.pipelines,
+      endpoint: this.endpoint,
+      state: this.state,
+    }
+  }
+
+  namespace(pipeId, str) {
+    return `arch-${this.id}-${pipeId}-${str}`
   }
 
   generateIOConfig = () => {
     const result = {};
 
-    for (let step in this.steps) {
-      step = parseInt(step);
-      const stepConfig = this.steps[step];
+    const genOutQueue = (pipeId, outStep) => this.namespace(pipeId, this.pipelines[pipeId].steps[outStep].block);
 
-      if (!stepConfig.block) {
-        throw new Error(`Required parameter block missing on step ${step}!`);
-      }
+    for (const pipeId in this.pipelines) {
+      const steps = this.pipelines[pipeId].steps;
 
-      if (!(stepConfig.block in result)) {
-        result[stepConfig.block] = {
-          endpoint: this.endpoint,
-          queues: {}
+      for (let step in steps) {
+        step = parseInt(step);
+        const stepConfig = steps[step];
+
+        if (!stepConfig.block) {
+          throw new Error(`Required parameter block missing on step ${step}!`);
         }
-      }
 
-      const blockConfig = result[stepConfig.block];
-      const namespacedQueue = this.namespace(stepConfig.block);
-      if (!blockConfig.queues[namespacedQueue]) {
-        blockConfig.queues[namespacedQueue] = {
-          steps: {},
-        };
-      }
+        if (!(stepConfig.block in result)) {
+          result[stepConfig.block] = {
+            endpoint: this.endpoint,
+            pipelines: {}
+          }
+        }
 
-      blockConfig.queues[namespacedQueue].steps[step] = {
-        fnName: stepConfig.fn,
-        extraArgs: stepConfig.extraArgs || [],
-        ...(this.steps.length - 1 !== step ? {
-          outQueue: this.namespace(this.steps[step + 1].block)
-        } : {}),
+        const blockConfig = result[stepConfig.block];
+        if (!blockConfig.pipelines[pipeId]) {
+          blockConfig.pipelines[pipeId] = {
+            queues: {},
+          };
+        }
+        const pipeConfig = blockConfig.pipelines[pipeId];
+
+        const namespacedQueue = this.namespace(pipeId, stepConfig.block);
+        if (!pipeConfig.queues[namespacedQueue]) {
+          pipeConfig.queues[namespacedQueue] = {
+            steps: {},
+          };
+        }
+
+        pipeConfig.queues[namespacedQueue].steps[step] = {
+          ...stepConfig,
+          ...(stepConfig.outCondition ? { outCondition: stepConfig.outCondition.map((condition) => {
+            if (!condition['outStep']) { return condition; }
+            condition.outQueue = genOutQueue(pipeId, condition['outStep']);
+            return condition;
+          }) } : {}),
+          extraArgs: stepConfig.extraArgs || [],
+          ...(stepConfig.outStep ? {
+            outQueue: genOutQueue(pipeId, stepConfig.outStep),
+          } : {}),
+        }
       }
     }
     return result;
   }
 
   async create() {
-    if (this.active) {
+    if (this.state !== 0) {
       throw new Error('Architecture is already active!');
     }
     // TODO: Check if service is running
@@ -69,7 +103,7 @@ export default class Architecture {
       }
     }
 
-    this.active = true;
+    this.state = 1;
   }
 
   async delete(ignoreErrors=false) {
@@ -83,6 +117,6 @@ export default class Architecture {
       }
     }
 
-    this.active = false;
+    this.state = 0;
   }
 }

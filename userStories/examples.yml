@@ -16,7 +16,7 @@
         name: output.txt
 
 
-- given: a http request with parameter input which is of type numeric and parameter location equals "http"
+- given: a http request with parameter "input" which is of type "numeric"
   then: return solved(x*30/30+5-5)
 - given: A numeric input and parameter location equals "store"
   then: store solved(x*30/30+5-5) as "output.txt" in dataset "local"

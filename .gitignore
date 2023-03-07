@@ -1,7 +1,8 @@
 **/node_modules/**
-
 **/__pycache__/**
-
 **/.ipynb_checkpoints/**
 
-generator/examples/out
+**/built/**
+reboot.js
+*compiled.yml
+userStories/*.jpg

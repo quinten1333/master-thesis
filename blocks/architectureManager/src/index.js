@@ -10,21 +10,10 @@ import morgan from 'morgan';
 import http from 'http';
 import debugLib from 'debug';
 
-import yaml from 'js-yaml';
-
-import AMQPConn from '../../../libs/msamessaging/messaging.js';
-import Architecture from './architecture.js';
+import conn from './conn.js';
+import routeApiArch from './api/architecture.js';
 
 const debug = debugLib('architectureManager');
-
-const config = JSON.parse(process.env.IOConfig);
-const conn = new AMQPConn(config.endpoint);
-
-let archId = -1;
-const architectures = {
-  [-1]: new Architecture(conn, -1, 'Testing', yaml.load(`- block: gateway\n  fn: listen\n  extraArgs:\n  - port: 3000\n- block: plus\n  fn: plus\n  extraArgs:\n  - 2\n- block: min\n  fn: min\n  extraArgs:\n  - 10\n- block: gateway\n  fn: reply\n  extraArgs:\n  - port: 3000`), 'amqp://rabbitmq'),
-  [-2]: new Architecture(conn, -2, 'Testing mul, div, plus, min', yaml.load(`- block: gateway\n  fn: listen\n  extraArgs:\n  - port: 3000\n- block: mul\n  fn: mul\n  extraArgs:\n  - 30\n- block: div\n  fn: div\n  extraArgs:\n  - 30\n- block: plus\n  fn: plus\n  extraArgs:\n  - 5\n- block: min\n  fn: min\n  extraArgs:\n  - 5\n- block: gateway\n  fn: reply\n  extraArgs:\n  - port: 3000`), 'amqp://rabbitmq'),
-};
 
 const createApp = (port) => {
   const app = express();
@@ -34,44 +23,19 @@ const createApp = (port) => {
   app.use(morgan('dev'));
   app.use(express.json({ }));
   app.use(express.urlencoded({ extended: true }));
-  // app.use(express.static('src/static'));
 
-  app.set('view engine', 'pug')
-  app.set('views', 'src/views')
+  if (process.env.NODE_ENV === 'development') {
+    app.use((req, res, next) => {
+      res.setHeader('Access-Control-Allow-Origin', '*');
+      res.setHeader('Access-Control-Allow-Methods', '*');
+      res.setHeader('Access-Control-Allow-Headers', '*');
+      res.setHeader('Access-Control-Max-Age', '86400');
+      next();
+    });
+  }
 
-  app.get('/', (req, res) => { res.render('index'); });
-  app.get('/architecture', (req, res) => { res.render('architecture', { architectures })});
-  app.get('/architecture/:archId/active', async (req, res, next) => {
-    const { archId } = req.params;
-    const { active } = req.query;
-    if (!archId) { res.status(400).send('No archId provided!'); return; }
-    try {
-      if (active === 'true') {
-        await architectures[archId].create();
-      } else {
-        await architectures[archId].delete();
-      }
-    } catch (error) {
-      next(error);
-      return;
-    }
-
-    res.redirect('/architecture');
-  });
-
-  app.get('/architecture/:archId/io', (req, res) => {
-    const { archId } = req.params;
-    if (!archId) { res.status(400).send('No archId provided!'); return; }
-
-    res.render('architecture-io', { arch: architectures[archId], io: JSON.stringify(architectures[archId].IOConfig, null, 2) })
-  })
-
-  app.post('/architecture', (req, res) => {
-    const newId = ++archId;
-    architectures[archId] = new Architecture(conn, newId, req.body.name, yaml.load(req.body.steps), req.body.endpoint);
-
-    res.render('architecture', { architectures });
-  });
+  app.use('/api/architecture', routeApiArch);
+  app.use(express.static('static'));
 
   // catch 404 and forward to error handler
   app.use((req, res, next) => {

@@ -1,0 +1,8 @@
+name: Parsing
+endpoint: amqp://rabbitmq
+datasets:
+userStories:
+- given: a http get request with path "/times" on port 3000 with parameter "this is my first number" of type "number" and parameter "second number" of type "number"
+  then:
+  - respond to the http request on port 3000
+

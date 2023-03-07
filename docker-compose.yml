@@ -9,6 +9,17 @@ services:
       - 15672:15672
       - 5672:5672
 
+  architectureManager-frontend:
+    image: node:latest
+    entrypoint: npm start
+    working_dir: /app
+    ports:
+      - 3002:3002
+    volumes:
+      - ./blocks/architectureManager/frontend:/app
+    environment:
+      PORT: 3002
+
   architectureManager:
     image: node:latest
     entrypoint: npm run dev
@@ -17,11 +28,22 @@ services:
       - 3001:80
     volumes:
       - ./blocks/architectureManager/:/app
-      - ./libs:/libs
+      - ./libs:/app/node_modules/@amicopo
     environment:
       PORT: 80
+      NODE_ENV: development
       IOConfig: '{ "endpoint": "amqp://rabbitmq" }'
-      DEBUG: architectureManager, messaging
+      DEBUG: architectureManager
+      DEBUG_COLORS: true
+
+  userStoryCompiler:
+    image: ghcr.io/quinten1333/mt-blocks:userStoryCompiler
+    build: blocks/userStoryCompiler
+    command: --reload --log-level warning
+    ports:
+      - 3003:80
+    volumes:
+      - ./blocks/userStoryCompiler/:/app
 
   gateway:
     image: node:latest
@@ -31,62 +53,55 @@ services:
       - 3000:3000
     volumes:
       - ./blocks/gateway/:/app
-      - ./libs:/libs
+      - ./libs:/app/node_modules/@amicopo
     environment:
       IOConfig: '{ "archEndpoint": "amqp://rabbitmq", "archExchange": "arch-management-gateway" }'
-      DEBUG: 'gateway:*,messaging'
+      DEBUG: 'gateway:*'
+      DEBUG_COLORS: true
 
-  div:
+  mongodb:
     image: node:latest
     entrypoint: npm run dev
     working_dir: /app
     volumes:
-      - ./blocks/div/:/app
-      - ./libs:/libs
+      - ./blocks/mongodb/:/app
+      - ./libs:/app/node_modules/@amicopo
     environment:
-      IOConfig: '{ "archEndpoint": "amqp://rabbitmq", "archExchange": "arch-management-div" }'
-      DEBUG: 'messaging'
+      IOConfig: '{ "archEndpoint": "amqp://rabbitmq", "archExchange": "arch-management-mongodb" }'
+      DEBUG: 'mongodb:*'
+      DEBUG_COLORS: true
 
-  min:
+  filesystem:
     image: node:latest
     entrypoint: npm run dev
     working_dir: /app
     volumes:
-      - ./blocks/min/:/app
-      - ./libs:/libs
+      - ./blocks/filesystem/:/app
+      - ./libs:/app/node_modules/@amicopo
     environment:
-      IOConfig: '{ "archEndpoint": "amqp://rabbitmq", "archExchange": "arch-management-min" }'
-      DEBUG: 'messaging'
+      IOConfig: '{ "archEndpoint": "amqp://rabbitmq", "archExchange": "arch-management-filesystem" }'
+      DEBUG: ''
+      DEBUG_COLORS: true
 
-  mod:
+  util:
     image: node:latest
     entrypoint: npm run dev
     working_dir: /app
     volumes:
-      - ./blocks/mod/:/app
-      - ./libs:/libs
+      - ./blocks/util/:/app
+      - ./libs:/app/node_modules/@amicopo
     environment:
-      IOConfig: '{ "archEndpoint": "amqp://rabbitmq", "archExchange": "arch-management-mod" }'
-      DEBUG: 'messaging'
+      IOConfig: '{ "archEndpoint": "amqp://rabbitmq", "archExchange": "arch-management-util" }'
+      DEBUG: ''
+      DEBUG_COLORS: true
 
-  mul:
-    image: node:latest
-    entrypoint: npm run dev
-    working_dir: /app
+  dataset-mongodb:
+    image: mongo
+    command: mongod --quiet --logpath /dev/null
     volumes:
-      - ./blocks/mul/:/app
-      - ./libs:/libs
-    environment:
-      IOConfig: '{ "archEndpoint": "amqp://rabbitmq", "archExchange": "arch-management-mul" }'
-      DEBUG: 'messaging'
+      - mongodb:/data/db
+    ports:
+      - 27017:27017
 
-  plus:
-    image: node:latest
-    entrypoint: npm run dev
-    working_dir: /app
-    volumes:
-      - ./blocks/plus/:/app
-      - ./libs:/libs
-    environment:
-      IOConfig: '{ "archEndpoint": "amqp://rabbitmq", "archExchange": "arch-management-plus" }'
-      DEBUG: 'messaging'
+volumes:
+  mongodb:

@@ -1,0 +1,34 @@
+name: CFG with all edge cases
+endpoint: amqp://rabbitmq
+datasets:
+  db:
+    type: mongodb
+    url: mongodb://dataset-mongodb
+    db: thesisFairPlatform
+    collection: users
+userStories:
+- given: a http get request with path "/user/login" on port 3000 with parameter "username" of type "string" and a parameter "password" of type "string"
+  then:
+  - pre:
+      select:
+      - username
+    do: query dataset "db" find one match state
+    post:
+      upsert:
+      - password as dbpwd
+  - given: dbpwd equals `undefined` # Should be properly handled
+    then:
+    - set state "User not found" # Should continue with next non-conditional line
+    - given: state equals "Second level"
+      then:
+      - set state "This one should not dissapear"
+      - given: state equals "tirth level"
+        then:
+        - set state "This one should not dissapear either"
+      - stop
+  - given: dbpwd equals "hi"
+    then:
+    - set state "What a simple password"
+  - log state
+  - respond to the http request on port 3000
+

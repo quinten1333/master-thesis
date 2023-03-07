@@ -90,71 +90,21 @@ class MSAArchitecture {
   constructor(archIO, functions) {
     this.archIO = archIO;
     this.functions = functions;
+    this.validateIO();
 
     this.started = false;
     this.conn = null;
-    this.reqIdCounter = 0;
 
-    // Contains the config of step '0' if present.
-    this.initialStep = null;
-    this.validateIO(this.archIO);
+    this.pipelines = [];
   }
 
-  validateIO(archIO) {
-    if (!archIO.endpoint) {
+  validateIO() {
+    if (!this.archIO.endpoint) {
       throw new Error(`Endpoint of architecture missing!`);
     }
 
-    for (const queue in archIO.queues) {
-      const queueConfig = archIO.queues[queue];
-
-      for (const step in queueConfig.steps) {
-        const stepConfig = queueConfig.steps[step];
-        if (step === '0') {
-          this.initialStep = stepConfig;
-
-          if (typeof stepConfig.outQueue === 'undefined') {
-            throw new Error('Initial step does not have an output!');
-          }
-        }
-
-        if (!this.functions[stepConfig.fnName]) {
-          throw new Error(`Function ${stepConfig.fnName} used in config but is not registered!`);
-        }
-        if (!Array.isArray(stepConfig.extraArgs)) {
-          throw new Error(`Required extraArgs parameter is not an array.`)
-        }
-      }
-    }
-  }
-
-  handleError(data, err) {
-    // TODO: Send error to original gateway to be returned to the user.
-    // Move to job based invocation?
-    console.error(err);
-  }
-
-  genReceive(queueConfig) {
-    return (data) => {
-      const stepConfig = queueConfig.steps[data.step];
-      if (!stepConfig) {
-        console.error(`Received unconfigured step "${data.step}"`);
-        return;
-      }
-
-      let output;
-      debug('Executing function %s with input %s', stepConfig.fnName, data.input);
-      try {
-        output = this.functions[stepConfig.fnName]({...data, arch: this }, ...stepConfig.extraArgs);
-      } catch (err) {
-        this.handleError(data, err);
-        return;
-      }
-
-      if (typeof stepConfig.outQueue !== 'undefined') {
-        debug('Sending result to %s',stepConfig.outQueue);
-        this.conn.send(stepConfig.outQueue, { ...data, step: data.step + 1, input: output });
-      }
+    if (!this.archIO.pipelines) {
+      throw new Error('Pipelines of architecture missing!');
     }
   }
 
@@ -164,27 +114,203 @@ class MSAArchitecture {
     }
     this.started = true;
 
-    this.conn = new AMQPConn(this.archIO.endpoint); // TODO: One connection per node instead of per arch
+    this.conn = new AMQPConn(this.archIO.endpoint);
     await this.conn.connect();
 
-    for (const queue in this.archIO.queues) {
-      const queueConfig = this.archIO.queues[queue];
+    for (const pipeId in this.archIO.pipelines) {
+      const pipeline = new MSAPipeline(this.archIO.pipelines[pipeId], this.functions, this.conn);
+      await pipeline.start();
+      this.pipelines.push(pipeline);
+    }
+  }
+
+  stop = async () => {
+    for (const pipeline of this.pipelines) {
+      await pipeline.stop();
+    }
+
+    await this.conn.disconnect();
+    this.conn = null;
+    this.started = false;
+  }
+}
+
+class MSAPipeline {
+  constructor(pipeIO, functions, conn) {
+    this.pipeIO = pipeIO;
+    this.functions = functions;
+    this.conn = conn;
+
+    this.started = false;
+    this.reqIdCounter = 0;
+
+    // Contains the config of step '0' if present.
+    this.initialQueue = null;
+    this.validateIO();
+  }
+
+  get initialStep() { return this.initialQueue ? this.initialQueue.steps[0] : null }
+
+  validateIO() {
+    for (const queue in this.pipeIO.queues) {
+      const queueConfig = this.pipeIO.queues[queue];
+
+      for (const step in queueConfig.steps) {
+        const stepConfig = queueConfig.steps[step];
+        if (step === '0') {
+          this.initialQueue = queueConfig;
+
+          if (typeof stepConfig.outQueue === 'undefined') {
+            throw new Error('Initial step does not have an output!');
+          }
+        }
+
+        if (!this.functions[stepConfig.fn]) {
+          throw new Error(`Function ${stepConfig.fn} used in config but is not registered!`);
+        }
+        if (!Array.isArray(stepConfig.extraArgs)) {
+          throw new Error(`Required extraArgs parameter is not an array.`)
+        }
+        if (!!stepConfig.outStep !== !!stepConfig.outQueue) {
+          throw new Error(`Output of config if partially configured: outStep=${stepConfig.outStep} outQueue=${stepConfig.outQueue}`);
+        }
+
+        if (stepConfig.outCondition) {
+          for (const condition of stepConfig.outCondition) {
+            if (!condition.fn) {
+              throw new Error(`Condition function is not set. Got condition: ${condition}`);
+            }
+
+            condition.fn = eval(condition.fn); //! Insecure
+            if (typeof condition.fn !== 'function') {
+              throw new Error(`Condition function is not actually of type function! Got type ${typeof condition.fn}`);
+            }
+          }
+        }
+
+      }
+    }
+  }
+
+  handleError(err, data, queueConfig, stepConfig) {
+    // TODO: Add error mechanism for each pipeline. Default if using gateway is to return the error to the user.
+    // Move to job based invocation?
+    console.error(`Callback function "${stepConfig.fn}" failed`)
+    console.error(err);
+  }
+
+  getInput = (state, pre) => {
+    if (!pre) {
+      return state;
+    }
+
+    if (pre.pick) {
+      return state[pre.pick];
+    }
+
+    const res = {};
+    for (const key of pre.select) {
+      res[key.to] = state[key.from];
+    }
+
+    return res;
+  }
+
+  getOutput = (output, state, post) => {
+    if (!post) {
+      return output;
+    }
+
+    if (post.set) {
+      state[post.set] = output;
+    }
+
+    if (output && post.upsert) {
+      for (const key of post.upsert) {
+        state[key.to] = output[key.from]
+      }
+    }
+
+    if (state && post.unset) {
+      for (const key of post.unset) {
+        delete state[key]
+      }
+    }
+
+    return state;
+  }
+
+  getOutdata = (stepConfig, outState) => {
+    if (stepConfig.outCondition) {
+      for (const condition of stepConfig.outCondition) {
+        if (condition.fn(outState)) {
+          return [condition['outQueue'], condition['outStep']]
+        }
+      }
+    }
+
+    return [stepConfig.outQueue, stepConfig.outStep];
+  }
+
+  genReceive(queueConfig) {
+    return async (data) => {
+      const stepConfig = queueConfig.steps[data.step];
+      if (!stepConfig) {
+        console.error(`Received unconfigured step "${data.step}"`);
+        return;
+      }
+
+      let output;
+      const input = this.getInput(data.state, stepConfig.pre);
+      debug('Executing function %s with input %s', stepConfig.fn, input);
+      try {
+        output = await this.functions[stepConfig.fn]({...data, state: undefined, input: input, pipeline: this }, ...stepConfig.extraArgs);
+      } catch (err) {
+        this.handleError(err, data, queueConfig, stepConfig);
+        return;
+      }
+
+      const outState = this.getOutput(output, data.state, stepConfig.post);
+      const [outQueue, outStep] = this.getOutdata(stepConfig, outState);
+      if (outQueue) {
+        debug('Sending result to %s', outQueue);
+        this.conn.send(outQueue, { ...data, step: outStep, state: outState });
+      }
+    }
+  }
+
+  start = async () => {
+    if (this.started) {
+      throw new Error('You cannot start a pipeline twice!');
+    }
+    this.started = true;
+
+    for (const queue in this.pipeIO.queues) {
+      const queueConfig = this.pipeIO.queues[queue];
       this.conn.receive(queue, this.genReceive(queueConfig));
     }
 
 
     if (this.initialStep) {
-      this.functions[this.initialStep.fnName]({ arch: this, start: true }, ...this.initialStep.extraArgs);
+      try {
+        await this.functions[this.initialStep.fn]({ pipeline: this, start: true }, ...this.initialStep.extraArgs);
+      } catch (err) {
+        this.handleError(err, { start: true }, this.initialQueue, this.initialStep);
+        return;
+      }
     }
   }
 
   stop = async () => {
-    await this.conn.disconnect();
-    this.conn = null;
     this.started = false;
 
     if (this.initialStep) {
-      this.functions[this.initialStep.fnName]({ arch: this, start: false }, ...this.initialStep.extraArgs);
+      try {
+        await this.functions[this.initialStep.fn]({ pipeline: this, start: false }, ...this.initialStep.extraArgs);
+      } catch (err) {
+        this.handleError(err, { start: false }, this.initialQueue, this.initialStep);
+        return;
+      }
     }
   }
 
@@ -197,7 +323,8 @@ class MSAArchitecture {
     }
 
     const reqId = ++this.reqIdCounter;
-    this.conn.send(this.initialStep.outQueue, { ...metadata, reqId, step: 1, input });
+    const state = this.getOutput(input, {}, this.initialStep.post);
+    this.conn.send(this.initialStep.outQueue, { ...metadata, reqId, step: 1, state });
 
     return reqId;
   }

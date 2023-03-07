@@ -3,14 +3,18 @@
 FROM node:latest
 LABEL org.opencontainers.image.source https://github.com/quinten1333/master-thesis
 
-ARG NODE_ENV=production
-ENV NODE_ENV=${NODE_ENV}
+ENV NODE_ENV=development
 
 WORKDIR /app
 COPY ./package*.json ./
+COPY ./tsconfig.json ./
 RUN npm ci
 
 COPY ./src ./src
-COPY --from=libs . /libs
+
+RUN npm run build
+ENV NODE_ENV=production
+
+COPY --from=libs . /app/node_modules/@amicopo
 
 ENTRYPOINT npm start

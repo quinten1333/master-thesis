@@ -1,0 +1,27 @@
+name: CFG error two givens directly after each others is not allowed
+endpoint: amqp://rabbitmq
+datasets:
+  db:
+    type: mongodb
+    url: mongodb://dataset-mongodb
+    db: thesisFairPlatform
+    collection: users
+userStories:
+- given: a http get request with path "/user/login" on port 3000 with parameter "username" of type "string" and a parameter "password" of type "string"
+  then:
+  - pre:
+      select:
+      - username
+    do: query dataset "db" find one match state
+    post:
+      upsert:
+      - password as dbpwd
+  - given: dbpwd equals undefined
+    then:
+    - given: dbpwd equals "second"
+      then:
+      - log state
+    - set state "User not found"
+  - log state
+  - respond to the http request on port 3000
+
