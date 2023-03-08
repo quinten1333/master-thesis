@@ -26,12 +26,12 @@ router.patch('/:id', async (req, res) => {
   if (!architecture) { res.status(404).json('Architecture not found'); return; }
 
   if ('state' in req.body) {
-    if (req.body.state === 0) {
+    if (req.body.state === false) {
       await architecture.delete();
-    } else if (req.body.state === 1) {
+    } else if (req.body.state === true) {
       await architecture.create();
     } else {
-      res.status(400).json('Unkown state given. Supply 0 or 1.');
+      res.status(400).json('Unkown state given. Supply a boolean value.');
       return;
     }
   }
