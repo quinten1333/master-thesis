@@ -60,6 +60,8 @@ post:
 ##### pre
 The only pre operation currently is the select operation. This selects items from the state and allows the renaming of them.
 
+It is possible to create objects inline using dots, for example `<key> as <level1>.<level2>.<finalKey>`.
+
 ##### post
 There are three post operations:
 - set: This assigns the output of the function to the supplied key.

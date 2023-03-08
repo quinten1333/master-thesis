@@ -210,7 +210,20 @@ class MSAPipeline {
 
     const res = {};
     for (const key of pre.select) {
-      res[key.to] = state[key.from];
+      const split = key.to.split('.');
+      let cur = res;
+
+      for (let i = 0; i < split.length; i++) {
+        if (i < split.length - 1) {
+          if (!(split[0] in cur)) {
+            cur[split[0]] = {};
+          }
+
+          cur = cur[split[0]];
+        }
+      }
+
+      cur[split[split.length - 1]] = state[key.from];
     }
 
     return res;
