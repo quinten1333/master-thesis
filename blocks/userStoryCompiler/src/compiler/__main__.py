@@ -7,6 +7,7 @@ from .Context import context
 from .normalize import normalizeStory
 from .TextAnalyser import tokenizeStory
 from .Story.Manager import StoryManager
+from .datasets import compileDatasets
 
 serviceStories = StoryManager()
 conditionStories = StoryManager()
@@ -293,6 +294,9 @@ def main(doc, command=None, debug=False):
 
   cfgCleanStories = [cleanupCFG(controllFlowGraphKeywords(story)) for story in unfoldedStories]
   if command == 'cfgClean': printStoriesDict(cfgCleanStories); exit(0)
+
+  context.doc['datasets'] = compileDatasets(context.datasets)
+  if command == 'datasets': print(context.datasets); exit(0)
 
   conditionStories.loadDir('condition')
   cfgCondParsedStories = [parseConditions(story) for story in cfgCleanStories]
