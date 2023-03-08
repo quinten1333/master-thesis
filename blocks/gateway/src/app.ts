@@ -101,10 +101,12 @@ class Server {
 
     const params = {};
     for (const param in route.params) {
-      if (!(param in req.query)) { next({ status: 400, message: `Missing parameter "${param}".`}); return; }
+      const data = req.method === 'get' ? req.query : req.body;
+
+      if (!(param in data)) { next({ status: 400, message: `Missing parameter "${param}".`}); return; }
       const paramConf = route.params[param];
 
-      params[param] = this.parseValue(paramConf.type, req.query[param]);
+      params[param] = this.parseValue(paramConf.type, data[param]);
       if (!params[param]) { next({ status: 400, message: `Parameter "${param}" does not have type "${paramConf.type}".` }); return; }
     }
 
@@ -118,6 +120,8 @@ class Server {
     this.app.disable('x-powered-by');
 
     this.app.use(morgan('dev'));
+    this.app.use(express.json({}));
+    this.app.use(express.urlencoded({ extended: true }));
 
     if (process.env.NODE_ENV === 'development') {
       this.app.use((req, res, next) => {
