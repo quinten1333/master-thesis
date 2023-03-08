@@ -1,0 +1,39 @@
+{
+  "name": "util",
+  "version": "1.0.0",
+  "description": "",
+  "main": "built/index.js",
+  "type": "module",
+  "scripts": {
+    "start": "node built/index.js",
+    "dev": "concurrently npm:dev:*",
+    "dev:js": "nodemon built/index.js",
+    "dev:tsc": "tsc --watch --preserveWatchOutput",
+    "build": "tsc",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "Quinten Coltof",
+  "license": "ISC",
+  "devDependencies": {
+    "@types/bcrypt": "^5.0.0",
+    "@types/jsonwebtoken": "^9.0.1",
+    "concurrently": "^7.6.0",
+    "nodemon": "^2.0.20",
+    "typescript": "^4.9.5"
+  },
+  "dependencies": {
+    "@amicopo/msamessaging": "^0.0.1",
+    "bcrypt": "^5.1.0",
+    "jsonwebtoken": "^8.5.1"
+  },
+  "nodemonConfig": {
+    "ignoreRoot": [
+      ".git"
+    ],
+    "watch": [
+      "./built",
+      "./node_modules/@amicopo"
+    ],
+    "signal": "SIGINT"
+  }
+}

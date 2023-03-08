@@ -6,8 +6,12 @@ datasets:
     url: mongodb://dataset-mongodb
     db: thesisFairPlatform
     collection: users
+  jwtSecret:
+    type: secret
+    generate: true
+    size: 1024
 userStories:
-- given: a http request with path "/user/login" on port 3000 with parameter "username" of type "string" and a parameter "password" of type "string"
+- given: a http post request with path "/user/login" on port 3000 with parameter "username" of type "string" and a parameter "password" of type "string"
   then:
   - pre:
       select:
@@ -16,6 +20,7 @@ userStories:
     post:
       upsert:
       - password as dbpwd
+      - _id as uid
   - given: dbpwd equals `undefined`
     then:
     - set state "User not found"
@@ -26,7 +31,23 @@ userStories:
     - set state "Incorrect password"
     - respond to the http request on port 3000
     - stop
-  - log state
+  - pre:
+      select:
+      - uid as payload.uid
+      - username as payload.username
+    do: create JWT token with secret "jwtSecret" with algorithm "HS512" which expires in "1h" is issued by "QRCSoftware" is not used before "0s" with subject "testing"
+    post:
+      set: token
+  - pre:
+      select:
+      - token as JWTToken
+    do: respond to the http request on port 3000
+
+- given: a http post request with path "/user/validate" on port 3000 with parameter "token" of type "string"
+  then:
+  - select:
+    - token
+    do: validate JWT with secret "jwtSecret"
   - respond to the http request on port 3000
 
 # - given: a http get request with path "/user/register" on port 3000 with parameter "username" of type "string" and a parameter "password" of type "string" and a parameter "email" of type "string"

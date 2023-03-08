@@ -45,6 +45,18 @@ services:
     volumes:
       - ./blocks/userStoryCompiler/:/app
 
+  auth:
+    image: node:latest
+    entrypoint: npm run dev
+    working_dir: /app
+    volumes:
+      - ./blocks/auth/:/app
+      - ./libs:/app/node_modules/@amicopo
+    environment:
+      IOConfig: '{ "archEndpoint": "amqp://rabbitmq", "archExchange": "arch-management-auth" }'
+      DEBUG: 'auth:*'
+      DEBUG_COLORS: true
+
   gateway:
     image: node:latest
     entrypoint: npm run dev
