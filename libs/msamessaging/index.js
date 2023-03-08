@@ -11,6 +11,38 @@ import debugLib from 'debug';
 
 const debug = debugLib('messaging');
 
+/**
+ * Merges the supplied objects on the first depth level.
+ * @param {Object} input The dynamic input
+ * @param {Object} args The static input which may be overwritten
+ * @returns Merged object
+ */
+export function mergeOptions(input, args) {
+  const res = {...args};
+  for (const key in input) {
+    res[key] = input[key];
+  }
+
+  return res;
+}
+
+/**
+ * Remove all undefined keys from the dictionary.
+ * @param {Object} originalDict The dictionary that will be cleaned
+ * @returns A dict withoud any keys which have the value undefined
+ */
+export function cleanDict(originalDict) {
+  const dict = {...originalDict};
+
+  for (const key in originalDict) {
+    if (dict[key] === undefined) {
+      delete dict[key];
+    }
+  }
+
+  return dict;
+}
+
 export default class MSAMessaging {
   constructor() {
     this.started = false;
