@@ -83,10 +83,10 @@ class Story:
     return conf
 
 class GenericConfig:
-  def __init__(self, block, fn, args = {}):
+  def __init__(self, block, fn, args = None):
     self.block = block
     self.fn = fn
-    self.args = args
+    self.args = args or {}
 
   def set(self, option, value):
     if option in self.args:
