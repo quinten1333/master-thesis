@@ -170,9 +170,10 @@ class Server {
     this.server.listen(this.port);
   }
 
-  public respond(reqId: number, result: any) {
+  public respond(reqId: number, result: any, status: number) {
     if (!(reqId in this.openRequests)) { return; }
 
+    this.openRequests[reqId].status(status);
     this.openRequests[reqId].json(result);
     delete this.openRequests[reqId];
   }

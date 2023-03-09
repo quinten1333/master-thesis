@@ -1,4 +1,4 @@
-from ..Story import Story, sobj, iobj, objParse
+from ..Story import Story, sobj, iobj, objParse, GenericConfig
 
 class Gateway:
   def __init__(self, path, port, method):
@@ -22,10 +22,13 @@ class Gateway:
   def getConfig(self):
     return self.config
 
-gatewayConf = Story(f'^http (get|post|put|patch|delete)? ?request path {sobj} port {iobj} ', lambda config, match, method, path, port: Gateway(path, objParse(port), method))
-gatewayConf.register(Story(f'(?: and )?parameter {sobj} of type {sobj}', lambda config, match, param, type: config.paramOfType(param, type)))
+request = Story(f'^http (get|post|put|patch|delete)? ?request path {sobj} port {iobj} ', lambda config, match, method, path, port: Gateway(path, objParse(port), method))
+request.register(Story(f'(?: and )?parameter {sobj} of type {sobj}', lambda config, match, param, type: config.paramOfType(param, type)))
+
+respond = Story(f'^respond http request port {iobj}', lambda config, match, port: GenericConfig('gateway', 'reply', { 'port': port })) #TODO: Remove the need to supply the port using the context
+respond.register(Story(f'status {iobj}', lambda config, match, statusCode: config.set('status', objParse(statusCode))))
 
 stories = [
-  gatewayConf,
-  Story("^respond http request port (\d+)", lambda config, match, port: { 'block': 'gateway', 'fn': 'reply', 'extraArgs': [{ 'port': port }] }), #TODO: Remove the need to supply the port using the context
+  request,
+  respond,
 ]

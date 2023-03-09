@@ -6,8 +6,8 @@ const io = new MSAMessaging();
 io.register('identity', (input: any) => input);
 
 
-io.register('reply', ({ reqId, input }, args: { port: number }) => {
-  servers[args.port].respond(reqId, input);
+io.register('reply', ({ reqId, input }, args: { port: number, status: number }) => {
+  servers[args.port].respond(reqId, input, args.status || 200);
 });
 
 io.register('listen', ({ pipeline, start }, args: { port: number, routes: Route[] }) => {
