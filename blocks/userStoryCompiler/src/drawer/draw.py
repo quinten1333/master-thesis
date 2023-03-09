@@ -1,7 +1,6 @@
 import sys
 import yaml
 import subprocess
-from pathlib import Path
 
 def read():
   inFile = sys.argv[1] if sys.argv[1] != '--' else '/dev/stdin'
@@ -19,24 +18,24 @@ def genName(stepId, steps):
   escapedDo = step['do'].replace('"', '\\"')
   return f'{stepId} - {escapedDo}'
 
+def genImage(steps):
+  graph = 'digraph G {'
+  for stepId, step in steps.items():
+    if 'outStep' in step:
+      graph += f'"{genName(stepId, steps)}" -> "{genName(step["outStep"], steps)}"\n'
+
+    if 'outCondition' in step:
+      for cond in step['outCondition']:
+        escapedFn = cond['fn'].replace('"', '\\"')
+        graph += f'"{genName(stepId, steps)}" -> "{genName(cond["outStep"], steps)}" [ label="{escapedFn}" ];\n'
+  graph += '}\n'
+
+  image = subprocess.run(['dot', '-Tjpg'], check=True, input=graph.encode(), stdout=subprocess.PIPE)
+  return image.stdout
+
 if __name__ == '__main__':
   pipelines = read()
 
   for pid, pipeline in enumerate(pipelines):
-    steps = pipeline['steps']
-
-    dotFile = Path(f'./{pid}.dot')
-    with open(dotFile, 'w') as file:
-      print('digraph G {', file=file)
-      for stepId, step in steps.items():
-        if 'outStep' in step:
-          print(f'"{genName(stepId, steps)}" -> "{genName(step["outStep"], steps)}"', file=file)
-
-        if 'outCondition' in step:
-          for cond in step['outCondition']:
-            escapedFn = cond['fn'].replace('"', '\\"')
-            print(f'"{genName(stepId, steps)}" -> "{genName(cond["outStep"], steps)}" [ label="{escapedFn}" ];', file=file)
-      print('}', file=file)
-
-    subprocess.run(['dot', f'{pid}.dot', '-Tjpg', '-o', f'{pid}.jpg'], check=True)
-    dotFile.unlink()
+    with open(f'{pid}.jpg', 'wb') as file:
+      file.write(genImage(pipeline['steps']))
