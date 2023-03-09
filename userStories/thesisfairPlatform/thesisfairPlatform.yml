@@ -54,12 +54,14 @@ userStories:
       - token as JWTToken
     do: respond to the http request on port 3000
 
+
 - given: a http post request with path "/user/validate" on port 3000 with parameter "token" of type "string"
   then:
   - select:
     - token
     do: validate JWT with secret "jwtSecret"
   - respond to the http request on port 3000
+
 
 - given: a http post request with path "/user" on port 3000 with parameter "username" of type "string" and a parameter "password" of type "string" and a parameter "email" of type "string"
   then:
