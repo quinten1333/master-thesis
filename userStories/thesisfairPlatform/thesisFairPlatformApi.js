@@ -19,10 +19,14 @@ let token = null;
 
 const api = {
   user: {
+    register: async (username, email, password) => {
+      return await server.post('/user', { username, email, password });
+    },
     login: async (username, password) => {
       const res = await server.post('/user/login', { username, password });
       token = res.JWTToken
     },
+    tokenPresent: () => !!token,
     validate: async () => {
       return await server.post('/user/validate', { token });
     }

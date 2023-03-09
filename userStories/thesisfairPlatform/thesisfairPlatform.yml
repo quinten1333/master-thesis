@@ -12,6 +12,7 @@ datasets:
     size: 1024
 userStories:
 - given: a http post request with path "/user/login" on port 3000 with parameter "username" of type "string" and a parameter "password" of type "string"
+# - given: this is an http post request. It has a path "/user/login" on port 3000 with parameter "username" of type "string" and a parameter "password" of type "string"
   then:
   - pre:
       select:
@@ -26,10 +27,20 @@ userStories:
     - set state "User not found"
     - respond to the http request on port 3000
     - stop
-  - given: password not equals dbpwd
+  - pre:
+      select:
+      - password
+      - dbpwd as hash
+    do: compare hash
+    post:
+      set: comparison
+      unset:
+      - password
+      - dbpwd
+  - given: comparison not equal `true`
     then:
     - set state "Incorrect password"
-    - respond to the http request on port 3000
+    - respond to the http request on port 3000 with status 401
     - stop
   - pre:
       select:
@@ -50,6 +61,37 @@ userStories:
     do: validate JWT with secret "jwtSecret"
   - respond to the http request on port 3000
 
-# - given: a http get request with path "/user/register" on port 3000 with parameter "username" of type "string" and a parameter "password" of type "string" and a parameter "email" of type "string"
-#   then:
-#   - store in a mongodb database at "mongodb"
+- given: a http post request with path "/user" on port 3000 with parameter "username" of type "string" and a parameter "password" of type "string" and a parameter "email" of type "string"
+  then:
+  - pre:
+      select:
+      - username
+    do: query dataset "db" find one match state
+    post:
+      set: user
+  - given: user not equal `null`
+    then:
+    - set state "Username already taken"
+    - respond to the http request on port 3000 with status 400
+    - stop
+  - pre:
+      select:
+      - email
+    do: query dataset "db" find one match state
+    post:
+      set: user
+  - given: user not equal `null`
+    then:
+    - set state "Email already in use"
+    - respond to the http request on port 3000 with status 400
+    - stop
+
+  - pre:
+      pick: password
+    do: hash
+    post:
+      set: password
+      unset:
+      - user
+  - store in dataset "db"
+  - respond to the http request on port 3000
