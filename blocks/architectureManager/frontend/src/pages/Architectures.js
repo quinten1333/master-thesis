@@ -1,5 +1,5 @@
 import React from 'react';
-import { Table, Button } from 'react-bootstrap'
+import { Table, Button, Modal, Tabs, Tab } from 'react-bootstrap'
 
 import api from '../api.js';
 
@@ -9,6 +9,7 @@ class Architectures extends React.Component {
 
     this.state = {
       architectures: {},
+      popup: null,
     }
   }
 
@@ -19,10 +20,42 @@ class Architectures extends React.Component {
 
   async activate(id, state) {
     await api.architecture.setActive(id, state);
-    const newArchitectures = {...this.state.architectures};
-    newArchitectures[id] = await api.architecture.get(id);
+    this.setState({ architectures: { ...this.state.architectures, [id]: await api.architecture.get(id) } });
+  }
 
-    this.setState({ architectures: newArchitectures });
+  viewIO = async (id) => {
+    const arch = this.state.architectures[id];
+    if (!arch) { return; }
+
+    const tabs = [];
+    for (const service in arch.IOConfig) {
+      tabs.push(
+        <Tab id={service} title={service} eventKey={service}>
+          <pre>
+            {JSON.stringify(arch.IOConfig[service], null, 2)}
+          </pre>
+        </Tab>
+      )
+    }
+
+    const popup = (
+      <Modal show={true} onHide={() => this.setState({ popup: null })} fullscreen>
+        <Modal.Header closeButton>{arch.name}</Modal.Header>
+        <Modal.Body>
+          <Tabs>
+            {tabs}
+          </Tabs>
+        </Modal.Body>
+      </Modal>
+    )
+
+    this.setState({ popup })
+  }
+
+  viewCFG = async (id) => {
+    const arch = this.state.architectures[id];
+    if (!arch) { return; }
+
   }
 
   renderRow = ([id, row]) => {
@@ -33,26 +66,33 @@ class Architectures extends React.Component {
         <td>{row.endpoint}</td>
         <td>{row.state ? 'Active' : 'Inactive'}</td>
         <td><Button onClick={() => this.activate(id, row.state > 0 ? 0 : 1)}>{row.state ? 'Deactivate' : 'Activate'}</Button></td>
+        <td><Button onClick={() => this.viewIO(id)}>Open</Button></td>
+        <td><Button onClick={() => this.viewCFG(id)}>Open</Button></td>
       </tr>
     )
   }
 
   render() {
     return (
-      <Table>
-        <thead>
-          <tr>
-            <th>#</th>
-            <th>Name</th>
-            <th>Endpoint</th>
-            <th>State</th>
-            <th>Actions</th>
-          </tr>
-        </thead>
-        <tbody>
-          {Object.entries(this.state.architectures).map(this.renderRow)}
-        </tbody>
-      </Table>
+      <>
+        <Table>
+          <thead>
+            <tr>
+              <th>#</th>
+              <th>Name</th>
+              <th>Endpoint</th>
+              <th>State</th>
+              <th>Actions</th>
+              <th>IO Config</th>
+              <th>CFG</th>
+            </tr>
+          </thead>
+          <tbody>
+            {Object.entries(this.state.architectures).map(this.renderRow)}
+          </tbody>
+        </Table>
+        {this.state.popup ? this.state.popup : null}
+      </>
     );
   }
 }

@@ -22,6 +22,7 @@ export default class Architecture {
       datasets: this.datasets,
       pipelines: this.pipelines,
       endpoint: this.endpoint,
+      IOConfig: this.IOConfig,
       state: this.state,
     }
   }
