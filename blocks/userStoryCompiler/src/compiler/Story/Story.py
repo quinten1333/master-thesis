@@ -2,6 +2,7 @@ import re
 import json
 
 from ..exceptions import *
+from ..Context import context
 
 debug = False
 
@@ -80,3 +81,33 @@ class Story:
       raise BaseException(f'Could not parse complete story.\nInput: "{input}"\nRemaining:"{remaining}"')
 
     return conf
+
+class GenericConfig:
+  def __init__(self, block, fn, args = {}):
+    self.block = block
+    self.fn = fn
+    self.args = args
+
+  def set(self, option, value):
+    if option in self.args:
+      raise CompileError(f'Tried to set option "{option}" twice!')
+
+    self.args[option] = value
+    return self
+
+  def setSecret(self, datasetName):
+    dataset = context.findDataset(datasetName)
+    if dataset['type'] != 'secret':
+      raise CompileError(f'Authentication secret should reference a dataset of type secret. "{datasetName}" is of type "{dataset["type"]}"')
+
+    self.args['secret'] = dataset['value']
+    self.args['secretEncoding'] = dataset['encoding']
+
+    return self
+
+  def getConfig(self):
+    return {
+      'block': self.block,
+      'fn': self.fn,
+      'extraArgs': [self.args]
+    }
