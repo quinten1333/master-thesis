@@ -5,4 +5,4 @@
 **/built/**
 reboot.js
 *compiled.yml
-userStories/*.jpg
+userStories/**/*.jpg
