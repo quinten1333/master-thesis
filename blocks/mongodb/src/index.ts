@@ -27,6 +27,16 @@ io.register('query', async ({ input }, args: { condition: any, url: string, db: 
   await client.close();
 
   return res;
-})
+});
+
+io.register('store', async ({ input }, args: { url: string, db: string, collection: string }) => {
+  const { client, col } = await connect(args);
+
+  const res = await col.insertOne(input);
+
+  await client.close();
+
+  return res.insertedId;
+});
 
 io.start();

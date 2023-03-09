@@ -1,13 +1,14 @@
 from ..Story import Story, sobj
 from ...Context import context
 
-class Query:
+class Database:
   typeToBlock = {
     'mongodb': 'mongodb'
   }
 
-  def __init__(self, datasetName):
+  def __init__(self, datasetName, operation):
     self.datasetName = datasetName
+    self.operation = operation
     self.dataset = context.findDataset(self.datasetName)
     self.args = {
       'url': self.dataset['url'],
@@ -25,17 +26,20 @@ class Query:
 
   def getConfig(self):
     return {
-      'block': Query.typeToBlock[self.dataset['type']],
-      'fn': 'query',
+      'block': Database.typeToBlock[self.dataset['type']],
+      'fn': self.operation,
       'extraArgs': [
         self.args
       ],
     }
 
-query = Story(f'^query dataset {sobj} ', lambda config, match, dataset: Query(dataset))
-query.register(Story('^find one ', lambda config, match: config.condition('one')))
-query.register(Story('^match state', lambda config, match: config.condition('equal')))
+query = Story(f'^query dataset {sobj}', lambda config, match, dataset: Database(dataset, 'query'))
+query.register(Story('find one', lambda config, match: config.condition('one')))
+query.register(Story('match state', lambda config, match: config.condition('equal')))
+
+store = Story(f'^store dataset {sobj}', lambda config, match, dataset: Database(dataset, 'store'))
 
 stories = [
   query,
+  store,
 ]
