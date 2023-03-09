@@ -322,6 +322,10 @@ def cli(argv, debug=False):
   if len(argv) >= 3:
     command = argv[2]
 
+  if command == 'debug':
+    command = ''
+    debug = True
+
   inFile = sys.argv[1] if sys.argv[1] != '--' else '/dev/stdin'
   with open(inFile, 'r') as file:
     ymlDoc = file.read()
