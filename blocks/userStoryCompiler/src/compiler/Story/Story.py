@@ -1,5 +1,6 @@
 import re
 import json
+import sys
 
 from ..exceptions import *
 from ..Context import context
@@ -47,10 +48,11 @@ class Story:
     if (not res):
       return False
 
+    matched = input[res.span()[0]:res.span()[1]]
     try:
-      config = self.callback(config, input[res.span()[0]:res.span()[1]], *res.groups())
+      config = self.callback(config, matched, *res.groups())
     except BaseException as e:
-      print(f'Callback of story {self.regexRaw} failed')
+      print(f'Callback of story {self.regexRaw} failed with matched "{matched}"', file=sys.stderr)
       raise e
     remaining = input[res.span()[1]:]
     if (debug): print('remaining: ', remaining)
@@ -82,6 +84,7 @@ class Story:
 
     return conf
 
+
 class GenericConfig:
   def __init__(self, block, fn, args = None):
     self.block = block
@@ -90,7 +93,7 @@ class GenericConfig:
 
   def set(self, option, value):
     if option in self.args:
-      raise CompileError(f'Tried to set option "{option}" twice!')
+      raise CompileError(f'Tried to set option "{option}" twice! From "{self.args[option]}" to "{value}".')
 
     self.args[option] = value
     return self
