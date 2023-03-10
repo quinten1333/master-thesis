@@ -30,7 +30,7 @@ class Architectures extends React.Component {
     const tabs = [];
     for (const service in arch.IOConfig) {
       tabs.push(
-        <Tab id={service} title={service} eventKey={service}>
+        <Tab key={service} title={service} eventKey={service}>
           <pre>
             {JSON.stringify(arch.IOConfig[service], null, 2)}
           </pre>
@@ -40,7 +40,7 @@ class Architectures extends React.Component {
 
     const popup = (
       <Modal show={true} onHide={() => this.setState({ popup: null })} fullscreen>
-        <Modal.Header closeButton>{arch.name}</Modal.Header>
+        <Modal.Header closeButton>{arch.name} - IOConfig</Modal.Header>
         <Modal.Body>
           <Tabs>
             {tabs}
@@ -55,7 +55,32 @@ class Architectures extends React.Component {
   viewCFG = async (id) => {
     const arch = this.state.architectures[id];
     if (!arch) { return; }
+    const pipeline = arch.pipelines[0]
 
+    const tabs = [];
+    for (const pid in arch.pipelines) {
+      const pipeline = arch.pipelines[pid];
+      const image = (await api.userStories.draw(pipeline.steps));
+
+      tabs.push(
+        <Tab key={pid} title={pid} eventKey={pid}>
+          <img src={image} />
+        </Tab>
+      )
+    }
+
+    const popup = (
+      <Modal show={true} onHide={() => this.setState({ popup: null })} fullscreen>
+        <Modal.Header closeButton>{arch.name} - Control flow graph</Modal.Header>
+        <Modal.Body>
+          <Tabs>
+            {tabs}
+          </Tabs>
+        </Modal.Body>
+      </Modal>
+    )
+
+    this.setState({ popup })
   }
 
   renderRow = ([id, row]) => {
