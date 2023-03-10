@@ -1,5 +1,7 @@
-from fastapi import FastAPI
+from fastapi import FastAPI, Response
+from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
+import base64
 import yaml
 import traceback
 
@@ -7,9 +9,13 @@ import compiler
 import drawer
 
 app = FastAPI()
-
-class CompileBody(BaseModel):
-  yaml: str
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 
 lock = False
 def lockFn(func):
@@ -29,6 +35,10 @@ def lockFn(func):
 
   return wrapper
 
+
+class CompileBody(BaseModel):
+  yaml: str
+
 @app.post("/compile")
 def getCompiled(body: CompileBody):
   @lockFn
@@ -44,6 +54,11 @@ def getCompiled(body: CompileBody):
 
   return lockedFn()
 
+
+class DrawBody(BaseModel):
+  steps: object
+
 @app.post('/draw')
-def getDrawing():
-  return 'TODO'
+def getDrawing(body: DrawBody):
+  img = drawer.genImage(body.steps)
+  return Response(img, media_type='image/jpeg')

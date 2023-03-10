@@ -14,12 +14,12 @@ def read():
   return doc['pipelines']
 
 def genName(stepId, steps):
-  step = steps[stepId]
+  step = steps[str(stepId)]
   escapedDo = step['do'].replace('"', '\\"')
   return f'{stepId} - {escapedDo}'
 
-def genImage(steps):
-  graph = 'digraph G {'
+def genImage(steps, type='jpg'):
+  graph = 'digraph G {\n'
   for stepId, step in steps.items():
     if 'outStep' in step:
       graph += f'"{genName(stepId, steps)}" -> "{genName(step["outStep"], steps)}"\n'
@@ -30,7 +30,7 @@ def genImage(steps):
         graph += f'"{genName(stepId, steps)}" -> "{genName(cond["outStep"], steps)}" [ label="{escapedFn}" ];\n'
   graph += '}\n'
 
-  image = subprocess.run(['dot', '-Tjpg'], check=True, input=graph.encode(), stdout=subprocess.PIPE)
+  image = subprocess.run(['dot', '-T' + type], check=True, input=graph.encode(), stdout=subprocess.PIPE)
   return image.stdout
 
 if __name__ == '__main__':
