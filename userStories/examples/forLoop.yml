@@ -9,18 +9,18 @@ datasets:
 userStories:
 - given: a http get request with path "/times" on port 3000 with parameter "fst" of type "number" and parameter "snd" of type "number" and parameter "operation" of type "string"
   then:
-  - do: set state `1`
-    post:
-      set: inc
-  - do: set state `0`
-    post:
-      set: res
+  # - do: set state `1`
+  #   post:
+  #     set: inc
+  # - do: set state `0`
+  #   post:
+  #     set: res
 
   - given: operation equals "multiply"
     then:
     - pre:
         select:
-        - res as a
+        - `0` as a
         - snd as b
       do: plus
       post:
@@ -28,7 +28,7 @@ userStories:
     - pre:
         select:
         - fst as a
-        - inc as b
+        - `1` as b
       do: minus
       post:
         set: fst
