@@ -46,8 +46,8 @@ def getCompiled(body: CompileBody):
     if not body.yaml:
       return { 'error': 'Missing yaml parameter' }
 
-    doc = yaml.safe_load(body.yaml)
     try:
+      doc = yaml.safe_load(body.yaml)
       return { 'data': yaml.dump(compiler.main(doc)) }
     except BaseException as e:
       return { 'error': traceback.format_exc() }
