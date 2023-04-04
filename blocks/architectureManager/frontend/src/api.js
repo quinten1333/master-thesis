@@ -1,9 +1,10 @@
 import axios from 'axios';
 
 const browser = typeof localStorage !== 'undefined';
+const ROOT = process.env.REACT_APP_ROOT;
 
 const archManager = axios.create({
-  baseURL: 'http://localhost:3001/api',
+  baseURL: `https://${ROOT}/api`,
   headers: {
     'Content-Type': 'application/json',
     'Accept': 'application/json',
@@ -18,7 +19,7 @@ archManager.interceptors.response.use((response) => {
 });
 
 const userStories = axios.create({
-  baseURL: 'http://localhost:3003/',
+  baseURL: `https://${ROOT}/userStory`,
   headers: {
     'Content-Type': 'application/json',
     'Accept': 'application/json',

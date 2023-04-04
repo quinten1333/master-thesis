@@ -12,14 +12,20 @@
     "ghcr.io/devcontainers/features/docker-outside-of-docker:1": {}
 	},
 
+  "containerEnv": {
+    "ROOT": "thesis.${localEnv:DEV_ROOT}"
+  },
+
   "workspaceMount": "source=${localWorkspaceFolder},target=${localWorkspaceFolder},type=bind",
-  "workspaceFolder": "${localWorkspaceFolder}"
+  "workspaceFolder": "${localWorkspaceFolder}",
 
 	// Use 'forwardPorts' to make a list of ports inside the container available locally.
 	// "forwardPorts": [],
 
 	// Use 'postCreateCommand' to run commands after the container is created.
-	// "postCreateCommand": "uname -a",
+	"postCreateCommand": {
+    "python": "pip install -r ${containerWorkspaceFolder}/blocks/userStoryCompiler/requirements.txt && python ${containerWorkspaceFolder}/blocks/userStoryCompiler/setup.py"
+  }
 
 	// Configure tool-specific properties.
 	// "customizations": {},

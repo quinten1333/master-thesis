@@ -9,23 +9,35 @@ services:
       - 15672:15672
       - 5672:5672
 
+    healthcheck:
+      test: rabbitmq-diagnostics -q ping
+      interval: 10s
+      timeout: 5s
+      retries: 3
+      start_period: 30s
+
   architectureManager-frontend:
     image: node:latest
     entrypoint: npm start
     working_dir: /app
-    ports:
-      - 3002:3002
     volumes:
       - ./blocks/architectureManager/frontend:/app
     environment:
-      PORT: 3002
+      PORT: 443
+      REACT_APP_ROOT: ${ROOT}
+    expose:
+    - 443
+
+    labels:
+      traefik.enable: true
+      traefik.http.routers.thesis.rule: Host(`${ROOT}`)
 
   architectureManager:
     image: node:latest
     entrypoint: npm run dev
     working_dir: /app
-    ports:
-      - 3001:80
+    expose:
+      - 80
     volumes:
       - ./blocks/architectureManager/:/app
       - ./libs:/app/node_modules/@amicopo
@@ -36,14 +48,28 @@ services:
       DEBUG: architectureManager
       DEBUG_COLORS: true
 
+    labels:
+      traefik.enable: true
+      traefik.http.routers.thesis-archManager.rule: Host(`${ROOT}`) && PathPrefix(`/api`)
+    depends_on:
+      rabbitmq:
+        condition: service_healthy
+
   userStoryCompiler:
     image: ghcr.io/quinten1333/mt-blocks:userStoryCompiler
     build: blocks/userStoryCompiler
     command: --reload --log-level warning
-    ports:
-      - 3003:80
+    expose:
+      - 80
     volumes:
       - ./blocks/userStoryCompiler/:/app
+
+    labels:
+      traefik.enable: true
+      traefik.http.routers.thesis-userStory.rule: Host(`${ROOT}`) && PathPrefix(`/userStory`)
+    depends_on:
+      rabbitmq:
+        condition: service_healthy
 
   auth:
     image: node:latest
@@ -56,6 +82,9 @@ services:
       IOConfig: '{ "archEndpoint": "amqp://rabbitmq", "archExchange": "arch-management-auth" }'
       DEBUG: 'auth:*'
       DEBUG_COLORS: true
+    depends_on:
+      rabbitmq:
+        condition: service_healthy
 
   gateway:
     image: node:latest
@@ -70,6 +99,9 @@ services:
       IOConfig: '{ "archEndpoint": "amqp://rabbitmq", "archExchange": "arch-management-gateway" }'
       DEBUG: 'gateway:*'
       DEBUG_COLORS: true
+    depends_on:
+      rabbitmq:
+        condition: service_healthy
 
   mongodb:
     image: node:latest
@@ -82,6 +114,9 @@ services:
       IOConfig: '{ "archEndpoint": "amqp://rabbitmq", "archExchange": "arch-management-mongodb" }'
       DEBUG: 'mongodb:*'
       DEBUG_COLORS: true
+    depends_on:
+      rabbitmq:
+        condition: service_healthy
 
   filesystem:
     image: node:latest
@@ -94,6 +129,9 @@ services:
       IOConfig: '{ "archEndpoint": "amqp://rabbitmq", "archExchange": "arch-management-filesystem" }'
       DEBUG: ''
       DEBUG_COLORS: true
+    depends_on:
+      rabbitmq:
+        condition: service_healthy
 
   util:
     image: node:latest
@@ -106,6 +144,9 @@ services:
       IOConfig: '{ "archEndpoint": "amqp://rabbitmq", "archExchange": "arch-management-util" }'
       DEBUG: ''
       DEBUG_COLORS: true
+    depends_on:
+      rabbitmq:
+        condition: service_healthy
 
   dataset-mongodb:
     image: mongo
@@ -117,3 +158,8 @@ services:
 
 volumes:
   mongodb:
+
+networks:
+  default:
+    name: traefik
+    external: true
