@@ -1,4 +1,4 @@
-import MSAMessaging from '@amicopo/msamessaging';
+import MSAMessaging, { mergeOptions } from '@amicopo/msamessaging';
 import Server, { Route } from './app.js';
 
 const servers: {[port: number]: Server} = {};
@@ -7,7 +7,10 @@ io.register('identity', (input: any) => input);
 
 
 io.register('reply', ({ reqId, input }, args: { port: number, status: number }) => {
-  servers[args.port].respond(reqId, input, args.status || 200);
+  if (!input.body) { input = { body: input } }
+  const options: { body: string, status: number, port: number } = mergeOptions(input, args);
+
+  servers[options.port].respond(reqId, options.body, options.status || 200);
 });
 
 io.register('listen', ({ pipeline, start }, args: { port: number, routes: Route[] }) => {
