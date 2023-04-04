@@ -1,7 +1,7 @@
 import axios from 'axios';
 
 const browser = typeof localStorage !== 'undefined';
-const ROOT = process.env.REACT_APP_ROOT;
+const ROOT = process.env.ROOT || process.env.REACT_APP_ROOT;
 
 const archManager = axios.create({
   baseURL: `https://${ROOT}/api`,

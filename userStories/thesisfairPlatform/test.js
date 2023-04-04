@@ -14,7 +14,7 @@ async function uploadFile(path) {
   return await archApi.architecture.create(compiledYaml);
 }
 
-async function dropDatabase(database, url = 'mongodb://localhost:27017/') {
+async function dropDatabase(database, url = 'mongodb://dataset-mongodb:27017/') {
   const client = await MongoClient.connect(url)
   const db = client.db(database);
   await db.dropDatabase();

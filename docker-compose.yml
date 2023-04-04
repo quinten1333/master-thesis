@@ -31,6 +31,9 @@ services:
     labels:
       traefik.enable: true
       traefik.http.routers.thesis.rule: Host(`${ROOT}`)
+    networks:
+    - default
+    - traefik
 
   architectureManager:
     image: node:latest
@@ -51,6 +54,9 @@ services:
     labels:
       traefik.enable: true
       traefik.http.routers.thesis-archManager.rule: Host(`${ROOT}`) && PathPrefix(`/api`)
+    networks:
+    - default
+    - traefik
     depends_on:
       rabbitmq:
         condition: service_healthy
@@ -67,9 +73,11 @@ services:
     labels:
       traefik.enable: true
       traefik.http.routers.thesis-userStory.rule: Host(`${ROOT}`) && PathPrefix(`/userStory`)
-    depends_on:
-      rabbitmq:
-        condition: service_healthy
+      traefik.http.routers.thesis-userStory.middlewares: thesis-userStory-StripPrefix
+      traefik.http.middlewares.thesis-userStory-StripPrefix.stripprefix.prefixes: /userStory
+    networks:
+    - default
+    - traefik
 
   auth:
     image: node:latest
@@ -90,8 +98,6 @@ services:
     image: node:latest
     entrypoint: npm run dev
     working_dir: /app
-    ports:
-      - 3000:3000
     volumes:
       - ./blocks/gateway/:/app
       - ./libs:/app/node_modules/@amicopo
@@ -102,6 +108,14 @@ services:
     depends_on:
       rabbitmq:
         condition: service_healthy
+    expose:
+    - 3000
+    labels:
+      traefik.enable: true
+      traefik.http.routers.thesis-gateway.rule: Host(`gateway.${ROOT}`)
+    networks:
+    - default
+    - traefik
 
   mongodb:
     image: node:latest
@@ -161,5 +175,6 @@ volumes:
 
 networks:
   default:
+  traefik:
     name: traefik
     external: true
