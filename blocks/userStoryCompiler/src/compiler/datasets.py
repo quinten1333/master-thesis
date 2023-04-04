@@ -2,8 +2,9 @@ from .exceptions import *
 import secrets
 
 def compileDatasets(datasets):
-  datasets = {**datasets}
+  if not datasets: return datasets
 
+  datasets = {**datasets}
   for name, dataset in datasets.items():
     datasets[name] = compileDataset(name, dataset)
 
