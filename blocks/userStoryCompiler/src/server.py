@@ -35,6 +35,9 @@ def lockFn(func):
 
   return wrapper
 
+@app.get("/")
+def root():
+  return 'Hi there! You have reached the root route of the userStoryCompiler. Please send another request after the beep... BEEP'
 
 class CompileBody(BaseModel):
   yaml: str
