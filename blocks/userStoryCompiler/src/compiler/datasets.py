@@ -26,7 +26,6 @@ def compileSecret(name, dataset):
     if type(dataset['size']) != int:
       raise InputError(f'Dataset "{name}": Size "{dataset["size"]}" is not an integer.')
 
-    t = secrets.token_urlsafe(dataset['size'] // 8)
     return {
       'type': 'secret',
       'encoding': 'base64',
