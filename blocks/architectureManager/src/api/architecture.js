@@ -42,7 +42,12 @@ router.patch('/:id', async (req, res) => {
 router.post('/', (req, res) => {
   const arch = yaml.load(req.body.yaml); // TODO: Error handling
   const newId = ++archId;
-  architectures[archId] = new Architecture(conn, newId, arch);
+  try {
+    architectures[archId] = new Architecture(conn, newId, arch);
+  } catch (error) {
+    console.error(error);
+    throw error;
+  }
 
   res.json(archId);
 })
