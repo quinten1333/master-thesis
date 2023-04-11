@@ -18,7 +18,8 @@
 	},
 
   "containerEnv": {
-    "ROOT": "thesis.${localEnv:DEV_ROOT}"
+    "ROOT": "thesis.${localEnv:DEV_ROOT}",
+    "DEV_ROOT": "${localEnv:DEV_ROOT}"
   },
 
 	// Use 'forwardPorts' to make a list of ports inside the container available locally.
