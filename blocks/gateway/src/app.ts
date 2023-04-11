@@ -101,7 +101,7 @@ class Server {
 
     const params = {};
     for (const param in route.params) {
-      const data = req.method === 'get' ? req.query : req.body;
+      const data = req.method === 'GET' ? req.query : req.body;
 
       if (!(param in data)) { next({ status: 400, message: `Missing parameter "${param}".`}); return; }
       const paramConf = route.params[param];
