@@ -237,7 +237,11 @@ class MSAPipeline {
     }
 
     if (pre.pick) {
-      return state[pre.pick];
+      if (pre.pick.key) {
+        return state[pre.pick.key];
+      } else {
+        return pre.pick.value;
+      }
     }
 
     const res = {};
@@ -255,7 +259,11 @@ class MSAPipeline {
         }
       }
 
-      cur[split[split.length - 1]] = state[key.from];
+      if (key.from) {
+        cur[split[split.length - 1]] = state[key.from];
+      } else {
+        cur[split[split.length - 1]] = key.value;
+      }
     }
 
     return res;
