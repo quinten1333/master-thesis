@@ -39,8 +39,11 @@ userStories:
       - dbpwd
   - given: comparison not equal `true`
     then:
-    - set state "Incorrect password"
-    - respond to the http request on port 3000 with status 401
+    - pre:
+        select:
+          - '"Incorrect password" as body'
+          - '`401` as status'
+      do: respond to the http request on port 3000
     - stop
   - pre:
       select:
