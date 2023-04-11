@@ -75,16 +75,25 @@ class Server {
   }
 
   private parseValue = (type: string, value: any) => {
+    let num: number;
     switch (type) {
       case 'string':
         return value;
 
       case 'integer':
-          return parseInt(value);
+          num = parseInt(value);
+          if (Number.isNaN(num)) {
+            return undefined;
+          }
+          return num;
 
       case 'number':
       case 'float':
-        return parseFloat(value);
+        num = parseFloat(value);
+        if (Number.isNaN(num)) {
+          return undefined;
+        }
+        return num;
 
       default:
         throw new Error(`Unkown type ${type}`);
@@ -107,7 +116,7 @@ class Server {
       const paramConf = route.params[param];
 
       params[param] = this.parseValue(paramConf.type, data[param]);
-      if (!params[param]) { next({ status: 400, message: `Parameter "${param}" does not have type "${paramConf.type}".` }); return; }
+      if (params[param] === undefined) { next({ status: 400, message: `Parameter "${param}" does not have type "${paramConf.type}".` }); return; }
     }
 
     const reqId = route.pipeline.run(params);
