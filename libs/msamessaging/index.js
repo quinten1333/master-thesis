@@ -368,8 +368,9 @@ class MSAPipeline {
     }
 
     const reqId = ++this.reqIdCounter;
-    const state = this.getOutput(input, {}, this.initialStep.post);
-    this.conn.send(this.initialStep.outQueue, { ...metadata, reqId, step: 1, state });
+    const outState = this.getOutput(input, {}, this.initialStep.post);
+    const [outQueue, outStep] = this.getOutdata(this.initialStep, outState);
+    this.conn.send(outQueue, { ...metadata, reqId, step: outStep, state: outState });
 
     return reqId;
   }
