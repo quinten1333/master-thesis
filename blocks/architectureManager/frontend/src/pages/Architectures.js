@@ -55,7 +55,6 @@ class Architectures extends React.Component {
   viewCFG = async (id) => {
     const arch = this.state.architectures[id];
     if (!arch) { return; }
-    const pipeline = arch.pipelines[0]
 
     const tabs = [];
     for (const pid in arch.pipelines) {
