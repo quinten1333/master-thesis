@@ -89,7 +89,7 @@ class Architectures extends React.Component {
         <td>{row.name}</td>
         <td>{row.endpoint}</td>
         <td>{row.state ? 'Active' : 'Inactive'}</td>
-        <td><Button onClick={() => this.activate(id, row.state > 0 ? 0 : 1)}>{row.state ? 'Deactivate' : 'Activate'}</Button></td>
+        <td><Button onClick={() => this.activate(id, row.state > 0 ? false : true)}>{row.state ? 'Deactivate' : 'Activate'}</Button></td>
         <td><Button onClick={() => this.viewIO(id)}>Open</Button></td>
         <td><Button onClick={() => this.viewCFG(id)}>Open</Button></td>
       </tr>
