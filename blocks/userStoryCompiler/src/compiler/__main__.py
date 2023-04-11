@@ -215,6 +215,8 @@ def controllFlowGraphKeywords(flattenedStory: dict) -> dict:
           del cond['outStep']
         elif target['op'] == 'goto':
           cond['outStep'] = int(target['step'])
+          if cond['outStep'] not in flattenedStory:
+            raise InputError('goto statement points to non-existing step. It is not possible to point a goto statement to a condition or other special operation at the moment.')
 
 
   return flattenedStory
@@ -273,6 +275,21 @@ def parseStory(cfgStory: dict) -> dict:
     'steps': steps
   }
 
+def validatePipeline(pipeline: dict):
+  """
+  Simple check which validates if all referenced steps actually exist.
+  """
+  steps: dict = pipeline['steps']
+  for step in steps.values():
+    if 'outStep' in step:
+      assert step['outStep'] in steps
+
+    if 'outCondition' in steps:
+      for cond in steps['outCondition']:
+        assert 'outStep' in cond
+        assert cond['outStep'] in steps
+
+
 def main(doc, command=None, debug=False):
   validateInput(doc)
   context.set(doc) # Not thread safe
@@ -310,6 +327,8 @@ def main(doc, command=None, debug=False):
   pipelines = [parseStory(userStory) for userStory in cfgCondParsedStories]
   if command == 'pipelines': print(pipelines); exit(0)
   doc['pipelines'] = pipelines
+
+  [validatePipeline(pipeline) for pipeline in pipelines]
 
   if command:
     print('Warning: Command not found')
