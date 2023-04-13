@@ -4,23 +4,17 @@ datasets:
 userStories:
 - given: a http get request with path "/" on port 3000 with parameter "input" which is of type "number"
   then:
-  - do: set state `2`
-    post:
-      set: two
-  - do: set state `10`
-    post:
-      set: ten
   - pre:
       select:
       - input as a
-      - two as b
+      - '`2` as b'
     do: plus
     post:
-      set: input
+      set: res
   - pre:
       select:
-      - input as a
-      - ten as b
+      - res as a
+      - '`10` as b'
     do: minus
   - respond to the http request on port 3000
 - given: a http request with path "/identity" on port 3000 with parameter "input" which is of type "number"
