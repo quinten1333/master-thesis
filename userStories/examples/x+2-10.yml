@@ -17,7 +17,3 @@ userStories:
       - '`10` as b'
     do: minus
   - respond to the http request on port 3000
-- given: a http request with path "/identity" on port 3000 with parameter "input" which is of type "number"
-  then:
-  - unpack "input"
-  - respond to the http request on port 3000

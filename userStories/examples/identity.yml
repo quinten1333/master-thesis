@@ -1,0 +1,7 @@
+name: Identity
+endpoint: amqp://rabbitmq
+datasets:
+userStories:
+- given: a http request with path "/identity" on port 3000 with parameter "input" which is of type "number"
+  then:
+  - respond to the http request on port 3000
