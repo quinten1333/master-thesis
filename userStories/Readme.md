@@ -46,6 +46,7 @@ The structure has the following keys:
 A general structure with all options shown is:
 ```yaml
 pre:
+  pick: <key>
   select:
   - <key> [as <differentName>]
 do: <user story>
