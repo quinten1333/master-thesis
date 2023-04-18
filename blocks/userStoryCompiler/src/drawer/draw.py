@@ -30,6 +30,9 @@ def genImage(steps, type='jpg'):
         graph += f'"{genName(stepId, steps)}" -> "{genName(cond["outStep"], steps)}" [ label="{escapedFn}" ];\n'
   graph += '}\n'
 
+  if type == 'text':
+    return graph
+
   image = subprocess.run(['dot', '-T' + type], check=True, input=graph.encode(), stdout=subprocess.PIPE)
   return image.stdout
 

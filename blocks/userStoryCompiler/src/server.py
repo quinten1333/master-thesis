@@ -60,8 +60,9 @@ def getCompiled(body: CompileBody):
 
 class DrawBody(BaseModel):
   steps: object
+  type: str | None
 
 @app.post('/draw')
 def getDrawing(body: DrawBody):
-  img = drawer.genImage(body.steps)
+  img = drawer.genImage(body.steps, body.type or 'jpg')
   return Response(img, media_type='image/jpeg')

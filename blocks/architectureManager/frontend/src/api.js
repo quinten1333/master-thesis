@@ -53,8 +53,10 @@ const api = {
     compile: async (yaml) => {
       return await userStories.post('/compile', { yaml: yaml });
     },
-    draw: async (steps) => {
-      const res = await userStories.post('/draw', { steps: steps }, { responseType: 'blob'})
+    draw: async (steps, type=undefined) => {
+      const res = await userStories.post('/draw', { steps: steps, type: type }, { responseType: type === 'text' ? 'text' : 'blob'})
+      if (type === 'text') { return res; }
+
       return URL.createObjectURL(res);
     },
   },

@@ -52,6 +52,12 @@ class Architectures extends React.Component {
     this.setState({ popup })
   }
 
+  copySource = async (steps, e) => {
+    const source = await api.userStories.draw(steps, 'text');
+    await navigator.clipboard.writeText(source);
+    e.target.innerText = 'Copied!'
+  }
+
   viewCFG = async (id) => {
     const arch = this.state.architectures[id];
     if (!arch) { return; }
@@ -63,6 +69,7 @@ class Architectures extends React.Component {
 
       tabs.push(
         <Tab key={pid} title={pid} eventKey={pid}>
+          <Button onClick={(e) => this.copySource(pipeline.steps, e)} style={{ position: 'absolute', right: 0, top: 0 }}>Copy source</Button>
           <img src={image} />
         </Tab>
       )
@@ -72,7 +79,7 @@ class Architectures extends React.Component {
       <Modal show={true} onHide={() => this.setState({ popup: null })} fullscreen>
         <Modal.Header closeButton>{arch.name} - Control flow graph</Modal.Header>
         <Modal.Body>
-          <Tabs>
+          <Tabs style={{ position: 'relative' }}>
             {tabs}
           </Tabs>
         </Modal.Body>
