@@ -24,8 +24,11 @@ userStories:
       - _id as uid
   - given: dbpwd equals `undefined`
     then:
-    - set state "User not found"
-    - respond to the http request on port 3000
+    - pre:
+        select:
+        - '"User not found" as body'
+        - '`404` as status'
+      do: respond to the http request on port 3000
     - stop
   - pre:
       select:
@@ -76,8 +79,10 @@ userStories:
       set: user
   - given: user not equal `null`
     then:
-    - set state "Username already taken"
-    - respond to the http request on port 3000 with status 400
+    - pre:
+        select:
+        - '"Username already taken" as body'
+      do: respond to the http request on port 3000 with status 400
     - stop
   - pre:
       select:
@@ -87,8 +92,10 @@ userStories:
       set: user
   - given: user not equal `null`
     then:
-    - set state "Email already in use"
-    - respond to the http request on port 3000 with status 400
+    - pre:
+        select:
+        - '"Email already in use" as body'
+      do: respond to the http request on port 3000 with status 400
     - stop
 
   - pre:
