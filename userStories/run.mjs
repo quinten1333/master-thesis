@@ -12,7 +12,7 @@ async function uploadFile(path) {
 }
 
 async function main() {
-  await fs.writeFile('../libs/msamessaging/reboot.js', 'reboot');
+  await fs.writeFile('../libs/pipelinemessaging/reboot.js', 'reboot');
   await sleep(750);
 
 
