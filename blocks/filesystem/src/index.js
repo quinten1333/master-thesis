@@ -1,4 +1,4 @@
-import MSAMessaging from '@amicopo/msamessaging';
+import Pipelinemessaging from '@amicopo/pipelinemessaging';
 import fs from 'node:fs/promises';
 import { join, relative, isAbsolute } from 'node:path';
 
@@ -14,7 +14,7 @@ const chrootPath = (chroot, path) => {
   return path;
 }
 
-const io = new MSAMessaging();
+const io = new Pipelinemessaging();
 io.register('write', async ({ input: { path, content } }, chroot, encoding='utf-8', forward) => {
   path = chrootPath(chroot, path);
 

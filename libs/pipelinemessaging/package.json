@@ -1,5 +1,5 @@
 {
-  "name": "@amicopo/msamessaging",
+  "name": "@amicopo/pipelinemessaging",
   "version": "0.0.1",
   "description": "A library which implements amqp messaging withing a microservice architecture",
   "main": "index.js",

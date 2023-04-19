@@ -1,8 +1,8 @@
 
-import MSAMessaging, { mergeOptions } from '@amicopo/msamessaging';
+import Pipelinemessaging, { mergeOptions } from '@amicopo/pipelinemessaging';
 import bcrypt from 'bcrypt';
 
-export default (io: MSAMessaging) => {
+export default (io: Pipelinemessaging) => {
   io.register('hash', ({ input }, { rounds = 12 }) => {
     return bcrypt.hash(input, rounds)
   });

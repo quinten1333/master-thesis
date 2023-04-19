@@ -1,8 +1,8 @@
-import MSAMessaging, { mergeOptions } from '@amicopo/msamessaging';
+import Pipelinemessaging, { mergeOptions } from '@amicopo/pipelinemessaging';
 import Server, { Route } from './app.js';
 
 const servers: {[port: number]: Server} = {};
-const io = new MSAMessaging();
+const io = new Pipelinemessaging();
 io.register('identity', (input: any) => input);
 
 

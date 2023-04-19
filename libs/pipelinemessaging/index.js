@@ -43,7 +43,7 @@ export function cleanDict(originalDict) {
   return dict;
 }
 
-export default class MSAMessaging {
+export default class Pipelinemessaging {
   constructor() {
     this.started = false;
     this.config = null;

@@ -22,7 +22,7 @@ async function dropDatabase(database, url = 'mongodb://dataset-mongodb:27017/') 
 }
 
 async function setup() {
-  await fs.writeFile('../../libs/msamessaging/reboot.js', 'reboot');
+  await fs.writeFile('../../libs/pipelinemessaging/reboot.js', 'reboot');
   await dropDatabase('thesisFairPlatform')
   await sleep(750);
 }

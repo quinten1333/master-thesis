@@ -1,6 +1,6 @@
-import MSAMessaging from '@amicopo/msamessaging';
+import Pipelinemessaging from '@amicopo/pipelinemessaging';
 
-const io = new MSAMessaging();
+const io = new Pipelinemessaging();
 
 // Number
 io.register('div', ({ input: { a, b } }) => a / b);

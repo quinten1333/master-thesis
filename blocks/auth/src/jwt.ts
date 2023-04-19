@@ -1,7 +1,7 @@
-import MSAMessaging, { mergeOptions, cleanDict } from '@amicopo/msamessaging';
+import Pipelinemessaging, { mergeOptions, cleanDict } from '@amicopo/pipelinemessaging';
 import jwt from 'jsonwebtoken';
 
-export default (io: MSAMessaging) => {
+export default (io: Pipelinemessaging) => {
   type CreateJWTOptions = {
     payload: Object
     secret: string
