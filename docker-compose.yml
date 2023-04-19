@@ -25,6 +25,7 @@ services:
     environment:
       PORT: 443
       REACT_APP_ROOT: ${ROOT}
+      REACT_APP_PROTOCOL: ${PROTOCOL}
     expose:
     - 443
 

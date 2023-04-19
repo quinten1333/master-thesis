@@ -1,7 +1,7 @@
 import axios from 'axios';
 
 const server = axios.create({
-  baseURL: `https://gateway.${process.env.ROOT}`,
+  baseURL: `${process.env.PROTOCOL}://gateway.${process.env.ROOT}`,
   headers: {
     'Content-Type': 'application/json',
     'Accept': 'application/json',
