@@ -1,9 +1,7 @@
 # PLANT: User Story Toolchain
 
-## ICT Open
-Slides can be found [here](https://github.com/quinten1333/master-thesis/blob/main/ICT-Open/presentation.pdf)
-
-Documentation about the language can be found in the [userStories folder](https://github.com/quinten1333/master-thesis/blob/main/userStories/Readme.md)
+## User stories
+Documentation about the language can be found in the [userStories folder](https://github.com/quinten1333/master-thesis/blob/main/userStories/Readme.md).
 
 ## Tools
 From high level to low level:
