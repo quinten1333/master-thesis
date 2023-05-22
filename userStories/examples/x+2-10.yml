@@ -4,13 +4,14 @@ datasets:
 userStories:
 - given: a http get request with path "/" on port 3000 with parameter "input" which is of type "number"
   then:
-  - pre:
-      select:
-      - input as a
-      - '`2` as b'
-    do: plus
-    post:
-      set: res
+  - Select input as a and `2` as b from the context; Sum the variables; Save the result in the context under "res";
+    # pre:
+    #   select:
+    #   - input as a
+    #   - '`2` as b'
+    # do: plus
+    # post:
+    #   set: res
   - pre:
       select:
       - res as a

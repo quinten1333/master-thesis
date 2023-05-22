@@ -26,9 +26,7 @@ def normalizeStory(userStory):
       if keyword:
         return keyword
 
-      return {
-        'do': step
-      }
+      return step
 
 
     if 'given' in step:
