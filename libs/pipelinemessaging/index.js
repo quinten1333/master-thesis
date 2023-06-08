@@ -231,14 +231,14 @@ class MSAPipeline {
     console.error(err);
   }
 
-  getInput = (state, pre) => {
+  getInput = (context, pre) => {
     if (!pre) {
-      return state;
+      return context;
     }
 
     if (pre.pick) {
       if (pre.pick.key) {
-        return state[pre.pick.key];
+        return context[pre.pick.key];
       } else {
         return pre.pick.value;
       }
@@ -260,7 +260,7 @@ class MSAPipeline {
       }
 
       if (key.from) {
-        cur[split[split.length - 1]] = state[key.from];
+        cur[split[split.length - 1]] = context[key.from];
       } else {
         cur[split[split.length - 1]] = key.value;
       }
@@ -269,34 +269,34 @@ class MSAPipeline {
     return res;
   }
 
-  getOutput = (output, state, post) => {
+  getOutput = (output, context, post) => {
     if (!post) {
       return output;
     }
 
     if (post.set) {
-      state[post.set] = output;
+      context[post.set] = output;
     }
 
     if (output && post.upsert) {
       for (const key of post.upsert) {
-        state[key.to] = output[key.from]
+        context[key.to] = output[key.from]
       }
     }
 
-    if (state && post.unset) {
+    if (context && post.unset) {
       for (const key of post.unset) {
-        delete state[key]
+        delete context[key]
       }
     }
 
-    return state;
+    return context;
   }
 
-  getOutdata = (stepConfig, outState) => {
+  getOutdata = (stepConfig, outContext) => {
     if (stepConfig.outCondition) {
       for (const condition of stepConfig.outCondition) {
-        if (condition.fn(outState)) {
+        if (condition.fn(outContext)) {
           return [condition['outQueue'], condition['outStep']]
         }
       }
@@ -314,20 +314,20 @@ class MSAPipeline {
       }
 
       let output;
-      const input = this.getInput(data.state, stepConfig.pre);
+      const input = this.getInput(data.context, stepConfig.pre);
       debug('Executing function %s with input %s', stepConfig.fn, input);
       try {
-        output = await this.functions[stepConfig.fn]({...data, state: undefined, input: input, pipeline: this }, ...stepConfig.extraArgs);
+        output = await this.functions[stepConfig.fn]({...data, context: undefined, input: input, pipeline: this }, ...stepConfig.extraArgs);
       } catch (err) {
         this.handleError(err, data, queueConfig, stepConfig);
         return;
       }
 
-      const outState = this.getOutput(output, data.state, stepConfig.post);
-      const [outQueue, outStep] = this.getOutdata(stepConfig, outState);
+      const outContext = this.getOutput(output, data.context, stepConfig.post);
+      const [outQueue, outStep] = this.getOutdata(stepConfig, outContext);
       if (outQueue) {
         debug('Sending result to %s', outQueue);
-        this.conn.send(outQueue, { ...data, step: outStep, state: outState });
+        this.conn.send(outQueue, { ...data, step: outStep, context: outContext });
       }
     }
   }
@@ -376,9 +376,9 @@ class MSAPipeline {
     }
 
     const reqId = ++this.reqIdCounter;
-    const outState = this.getOutput(input, {}, this.initialStep.post);
-    const [outQueue, outStep] = this.getOutdata(this.initialStep, outState);
-    this.conn.send(outQueue, { ...metadata, reqId, step: outStep, state: outState });
+    const outContext = this.getOutput(input, {}, this.initialStep.post);
+    const [outQueue, outStep] = this.getOutdata(this.initialStep, outContext);
+    this.conn.send(outQueue, { ...metadata, reqId, step: outStep, context: outContext });
 
     return reqId;
   }
