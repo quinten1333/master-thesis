@@ -280,7 +280,7 @@ class MSAPipeline {
 
     if (output && post.upsert) {
       for (const key of post.upsert) {
-        context[key.to] = output[key.from]
+        context[key.to] = key.from ? output[key.from] : key.value;
       }
     }
 
