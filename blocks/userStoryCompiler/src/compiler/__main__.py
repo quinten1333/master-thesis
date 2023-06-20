@@ -1,6 +1,7 @@
 import sys
 import yaml
 from collections import defaultdict
+from pathlib import Path
 
 from .exceptions import *
 from .Context import context
@@ -63,6 +64,28 @@ def validateInput(doc):
     raise InputError('No userStories given in YAML doc')
 
   # TODO: Validate structure of datasets and userStories
+
+def resolveStories(stories: list, root):
+  newStories = []
+  for i, story in enumerate(stories):
+    if type(story) != str:
+      newStories.append(story)
+      continue
+
+    if not story.startswith('import '):
+      newStories.append(story)
+      continue
+
+    path = root.joinpath(story[7:])
+    with path.open('r') as file:
+      ymlDoc = file.read()
+    content = yaml.safe_load(ymlDoc)
+
+    if type(content) != list:
+      raise InputError('Imported file does not contain a list of user stories!')
+
+    newStories.extend(content)
+  return newStories
 
 
 def validateStory(userStory):
@@ -290,12 +313,14 @@ def validatePipeline(pipeline: dict):
         assert cond['outStep'] in steps
 
 
-def main(doc, command=None, debug=False):
+def main(doc, root, command=None, debug=False):
   validateInput(doc)
   context.set(doc) # Not thread safe
 
+  resolvedStories = resolveStories(context.userStories, root)
+  if command == 'resolved': print(resolvedStories); exit(0)
 
-  normalStories = [normalizeStory(userStory) for userStory in context.userStories]
+  normalStories = [normalizeStory(userStory) for userStory in resolvedStories]
   if command == 'normalized': printNormalStories(normalStories); exit(0)
 
   for normalStory in normalStories: validateStory(normalStory)
@@ -350,10 +375,11 @@ def cli(argv, debug=False):
     debug = True
 
   inFile = sys.argv[1] if sys.argv[1] != '--' else '/dev/stdin'
+  root = Path.cwd().joinpath(Path(sys.argv[1])).parent if sys.argv[1] != '--' else Path.cwd()
   with open(inFile, 'r') as file:
     ymlDoc = file.read()
 
-  return main(yaml.safe_load(ymlDoc), command, debug)
+  return main(yaml.safe_load(ymlDoc), root, command, debug)
 
 if __name__ == "__main__":
   doc = cli(sys.argv, debug=True)

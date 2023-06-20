@@ -34,6 +34,7 @@ The simple structure allows the user to directly enter the user story text or ke
 ##### Keywords
 - stop - Stops the execution of the pipeline here
 - goto <int> - Go to step number `int` of the pipeline
+- import <path> - Imports the list of steps in another yaml file at the given path on this location. Can only be done at the root step where normaly a given would be.
 
 #### Advanced structure
 The advanced structure allows to create a specific view of the state for the function and afterwards (partially) updating the state. This allows the pipeline to remember multiple variables which opens a lot of extra possibilities.
