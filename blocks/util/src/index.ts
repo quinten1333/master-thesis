@@ -25,7 +25,7 @@ io.register('jsonStringify', ({ input }) => JSON.stringify(input));
 
 // Debugging
 io.register('log', ({ input }) => {
-  console.log(input);
+  console.log('type:', typeof input, 'value:', input);
   return input;
 })
 
