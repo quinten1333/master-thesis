@@ -313,11 +313,11 @@ def validatePipeline(pipeline: dict):
         assert cond['outStep'] in steps
 
 
-def main(doc, root, command=None, debug=False):
+def main(doc, root=False, command=None, debug=False):
   validateInput(doc)
   context.set(doc) # Not thread safe
 
-  resolvedStories = resolveStories(context.userStories, root)
+  resolvedStories = resolveStories(context.userStories, root) if root else context.userStories
   if command == 'resolved': print(resolvedStories); exit(0)
 
   normalStories = [normalizeStory(userStory) for userStory in resolvedStories]
