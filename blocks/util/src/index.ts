@@ -19,6 +19,10 @@ io.register('select', ({ input }, i) => input[i]);
 // State
 io.register('set', (_, value) => value)
 
+// JSON
+io.register('jsonParse', ({ input }) => JSON.parse(input));
+io.register('jsonStringify', ({ input }) => JSON.stringify(input));
+
 // Debugging
 io.register('log', ({ input }) => {
   console.log(input);

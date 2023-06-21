@@ -12,4 +12,7 @@ stories = [
 
   Story(f'^set state {obj}', lambda config, match, value: ({ 'block': 'util', 'fn': 'set', 'extraArgs': [ objParse(value) ] })),
   Story('^log state', lambda config, match: ({ 'block': 'util', 'fn': 'log', 'extraArgs': [ ] })),
+
+  Story('^JSON parse', lambda config, match: ({ 'block': 'util', 'fn': 'jsonParse', 'extraArgs': [ ] })),
+  Story('^JSON stringify', lambda config, match: ({ 'block': 'util', 'fn': 'jsonStringify', 'extraArgs': [ ] })),
 ]
