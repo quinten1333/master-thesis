@@ -4,7 +4,9 @@ import importlib
 from ..exceptions import *
 
 class StoryManager:
-  stories = []
+  def __init__(self):
+    self.stories = []
+
   def registerStories(self, stories: list) -> None:
     self.stories.extend(stories)
 
