@@ -56,7 +56,7 @@ def normalizePost(post):
 
 def compilePrePost(story: dict):
   for stepId, step in story.items():
-    if 'pre' in step: step['pre'] = normalizePre(step['pre'])
-    if 'post' in step: step['post'] = normalizePost(step['post'])
+    if 'pre' in step and step['pre']: step['pre'] = normalizePre(step['pre'])
+    if 'post' in step and step['post']: step['post'] = normalizePost(step['post'])
 
   return story
