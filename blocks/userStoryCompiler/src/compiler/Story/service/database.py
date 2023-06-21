@@ -19,7 +19,7 @@ class Database:
   def condition(self, condition):
     if condition == 'equal':
       self.args['condition'] = 'equal'
-    if condition == 'one':
+    elif condition == 'one':
       self.args['one'] = True
 
     return self
