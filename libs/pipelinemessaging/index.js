@@ -233,40 +233,23 @@ class MSAPipeline {
 
   getInput = (context, pre) => {
     if (!pre) {
-      return context;
+      return context.data;
     }
 
     if (pre.pick) {
       if (pre.pick.key) {
-        return context[pre.pick.key];
+        return context.get(pre.pick.key);
       } else {
         return pre.pick.value;
       }
     }
 
-    const res = {};
+    const res = new Context({});
     for (const key of pre.select) {
-      const split = key.to.split('.');
-      let cur = res;
-
-      for (let i = 0; i < split.length; i++) {
-        if (i < split.length - 1) {
-          if (!(split[0] in cur)) {
-            cur[split[0]] = {};
-          }
-
-          cur = cur[split[0]];
-        }
-      }
-
-      if (key.from) {
-        cur[split[split.length - 1]] = context[key.from];
-      } else {
-        cur[split[split.length - 1]] = key.value;
-      }
+      res.set(key.to, key.from ? context.get(key.from) : key.value)
     }
 
-    return res;
+    return res.data;
   }
 
   getOutput = (output, context, post) => {
@@ -275,22 +258,22 @@ class MSAPipeline {
     }
 
     if (post.set) {
-      context[post.set] = output;
+      context.set(post.set, output);
     }
 
     if (output && post.upsert) {
       for (const key of post.upsert) {
-        context[key.to] = key.from ? output[key.from] : key.value;
+        context.set(key.to, key.from ? output[key.from] : key.value);
       }
     }
 
     if (context && post.unset) {
       for (const key of post.unset) {
-        delete context[key]
+        context.unset(key);
       }
     }
 
-    return context;
+    return context.data;
   }
 
   getOutdata = (stepConfig, outContext) => {
@@ -314,7 +297,8 @@ class MSAPipeline {
       }
 
       let output;
-      const input = this.getInput(data.context, stepConfig.pre);
+      const context = new Context(data.context);
+      const input = this.getInput(context, stepConfig.pre);
       debug('Executing function %s with input %s', stepConfig.fn, input);
       try {
         output = await this.functions[stepConfig.fn]({...data, context: undefined, input: input, pipeline: this }, ...stepConfig.extraArgs);
@@ -323,11 +307,11 @@ class MSAPipeline {
         return;
       }
 
-      const outContext = this.getOutput(output, data.context, stepConfig.post);
-      const [outQueue, outStep] = this.getOutdata(stepConfig, outContext);
+      const outData = this.getOutput(output, context, stepConfig.post);
+      const [outQueue, outStep] = this.getOutdata(stepConfig, outData);
       if (outQueue) {
         debug('Sending result to %s', outQueue);
-        this.conn.send(outQueue, { ...data, step: outStep, context: outContext });
+        this.conn.send(outQueue, { ...data, step: outStep, context: outData });
       }
     }
   }
@@ -381,5 +365,51 @@ class MSAPipeline {
     this.conn.send(outQueue, { ...metadata, reqId, step: outStep, context: outContext });
 
     return reqId;
+  }
+}
+
+class Context {
+  constructor(initialValue) {
+    this.context = initialValue;
+  }
+
+  resolve(key) {
+    const split = key.split('.');
+    if (split.length === 1) {
+      return [this.context, split[0]];
+    }
+
+    let cur = this.context;
+
+    for (let i = 0; i < split.length; i++) {
+      if (i < split.length - 1) {
+        if (!(split[i] in cur)) {
+          cur[split[i]] = {};
+        }
+
+        cur = cur[split[i]];
+      }
+    }
+
+    return [cur, split[split.length - 1]];
+  }
+
+  get(key) {
+    const [parent, childKey] = this.resolve(key);
+    return parent[childKey];
+  }
+
+  set(key, value) {
+    const [parent, childKey] = this.resolve(key);
+    parent[childKey] = value;
+  }
+
+  unset(key) {
+    const [parent, childKey] = this.resolve(key);
+    delete parent[childKey];
+  }
+
+  get data() {
+    return this.context;
   }
 }
