@@ -77,8 +77,21 @@ class Server {
   private parseValue = (type: string, value: any) => {
     let num: number;
     switch (type) {
-      case 'string':
+      case 'object':
+        if (typeof value !== 'object') {
+          return undefined;
+        }
+
         return value;
+
+      case 'array':
+        if (!Array.isArray(value)) {
+          return undefined;
+        }
+        return value;
+
+      case 'string':
+        return value.toString();
 
       case 'integer':
           num = parseInt(value);
@@ -111,6 +124,7 @@ class Server {
     const params = {};
     for (const param in route.params) {
       const data = req.method === 'GET' ? req.query : req.body;
+      console.log(req.query, req.body);
 
       if (!(param in data)) { next({ status: 400, message: `Missing parameter "${param}".`}); return; }
       const paramConf = route.params[param];
