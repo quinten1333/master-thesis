@@ -261,9 +261,14 @@ class MSAPipeline {
       context.set(post.set, output);
     }
 
+    if (post.initArray) {
+      context.set(post.initArray, []);
+    }
+
     if (output && post.upsert) {
+      const outputObj = new Context(output);
       for (const key of post.upsert) {
-        context.set(key.to, key.from ? output[key.from] : key.value);
+        context.set(key.to, key.from ? outputObj.get(key.from) : key.value);
       }
     }
 
@@ -373,40 +378,91 @@ class Context {
     this.context = initialValue;
   }
 
-  resolve(key) {
-    const split = key.split('.');
-    if (split.length === 1) {
-      return [this.context, split[0]];
-    }
+  static getPattern(root, path, cb) {
+    let cur = root;
+    let key;
+    path = [...path];
+    while (path.length > 0) {
+      key = path.shift();
 
-    let cur = this.context;
+      if (key.endsWith('[]')) {
+        key = key.substring(0, key.length - 2);
 
-    for (let i = 0; i < split.length; i++) {
-      if (i < split.length - 1) {
-        if (!(split[i] in cur)) {
-          cur[split[i]] = {};
+        if (key) { cur = cur[key]; }
+        for (const obj of cur) {
+          Context.getPattern(obj, path, cb);
+        }
+        return; // Other invocations have finished the work recursivally.
+      } else {
+        if (!(key in cur)) {
+          cur[key] = {};
         }
 
-        cur = cur[split[i]];
+        cur = cur[key];
       }
     }
 
-    return [cur, split[split.length - 1]];
+    // We are finished
+    cb(cur);
+  }
+
+  resolve(key, cb) {
+    const path = key.split('.');
+    if (path.length === 1 && !path[0].endsWith('[]')) {
+      return cb(this.context, path[0]);
+    }
+
+    const childKey = path.pop();
+    Context.getPattern(this.context, path, (parent) => cb(parent, childKey));
   }
 
   get(key) {
-    const [parent, childKey] = this.resolve(key);
-    return parent[childKey];
+    const res = [];
+    this.resolve(key, (parent, childKey) => {
+      res.push(parent[childKey]);
+    });
+
+    if (res.length === 1) {
+      return res[0];
+    }
+
+    return res;
   }
 
   set(key, value) {
-    const [parent, childKey] = this.resolve(key);
-    parent[childKey] = value;
+    const res = [];
+    this.resolve(key, (parent, childKey) => {
+      res.push([parent, childKey]);
+    });
+
+    if (res.length === 1) {
+      const [parent, childKey] = res[0];
+      parent[childKey] = value;
+      return;
+    }
+
+    if (!Array.isArray(value) || (Array.isArray(value) && value.length <= 1)) {
+      for (const [parent, childKey] of res) {
+        parent[childKey] = value;
+      }
+      return;
+    }
+
+    if (res.length !== value.length) {
+      throw new Error('Trying to merge arrays with different lengths!');
+    }
+
+    // Merge arrays
+    for (const i in res) {
+      // parent[child] = value
+      res[i][0][res[i][1]] = value[i]
+    }
   }
 
   unset(key) {
-    const [parent, childKey] = this.resolve(key);
-    delete parent[childKey];
+    this.resolve(key, (parent, childKey) => {
+      delete parent[childKey];
+    });
   }
 
   get data() {

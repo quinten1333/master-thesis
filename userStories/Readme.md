@@ -39,7 +39,10 @@ The simple structure allows the user to directly enter the user story text or ke
 #### Advanced structure
 The advanced structure allows to create a specific view of the state for the function and afterwards (partially) updating the state. This allows the pipeline to remember multiple variables which opens a lot of extra possibilities.
 
-The structure has the following keys:
+Everywhere where a key can be submitted it is possible to create nested objects using dot notation. So `user.firstname` would be the JavaScript equivalent of `context[user][firstname]`.
+This notation can also be used for arrays. `users[].firstname` would result in a list where from every object in the array `context[users]` the firstname is taken. So it would be `context[users].map((user) => user.firstname)`. This can be nested as well so `users[].contacts[].phoneNumbers` is also a valid key both for getting and setting.
+
+The structure has the following structure:
 - pre: Steps that are taken before execution to create a view from the state. If this is not present the whole state will be passed.
 - do: The user story string
 - post: Steps that specify how the state should be updated. If this is not present the whole state will be overwritten with the result.
@@ -53,10 +56,11 @@ pre:
 do: <user story>
 post:
   set: <key>
-  unset:
-  - <key>
+  initArray: <key>
   upsert:
   - <key> [as <differentName>]
+  unset:
+  - <key>
 ```
 
 ##### pre
@@ -67,5 +71,6 @@ It is possible to create objects inline using dots, for example `<key> as <level
 ##### post
 There are three post operations:
 - set: This assigns the output of the function to the supplied key.
+- initArray: Initialize an array at the given position.
 - upsert: Update or insert the given keys from the output dictionary in the state, optionally renaming them.
 - unset: Remove variables from the state which are no longer needed after that step.
