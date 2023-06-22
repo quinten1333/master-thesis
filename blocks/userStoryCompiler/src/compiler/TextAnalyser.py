@@ -18,6 +18,7 @@ class TextAnalyser:
     self.stop_words.remove('of')
     self.stop_words.remove('and')
     self.stop_words.remove('not')
+    self.stop_words.remove('in')
 
     self.lemmatizer = WordNetLemmatizer()
     self.tag_map = defaultdict(lambda: wordnet.NOUN)
