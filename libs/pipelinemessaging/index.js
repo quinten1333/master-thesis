@@ -245,8 +245,12 @@ class MSAPipeline {
     }
 
     const res = new Context({});
+    let value;
     for (const key of pre.select) {
-      res.set(key.to, key.from ? context.get(key.from) : key.value)
+      value = key.from ? context.get(key.from) : key.value;
+      if (value === undefined) { continue; }
+
+      res.set(key.to, value)
     }
 
     return res.data;
