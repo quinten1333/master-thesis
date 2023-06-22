@@ -7,7 +7,7 @@ io.register('identity', (input: any) => input);
 
 
 io.register('reply', ({ reqId, input }, args: { port: number, status: number }) => {
-  if (!input.body) { input = { body: input } }
+  if (!('body' in input)) { input = { body: input } }
   const options: { body: string, status: number, port: number } = mergeOptions(input, args);
 
   servers[options.port].respond(reqId, options.body, options.status || 200);
