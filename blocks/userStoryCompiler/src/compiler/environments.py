@@ -40,7 +40,7 @@ def normalizeEnvironment(story: dict):
   return story
 
 
-def resolveEnvironment(story: dict):
+def resolveEnvironment(pipelineId, story: dict):
   newStory = {**story}
   highestStep = max(story.keys())
 
@@ -64,6 +64,8 @@ def resolveEnvironment(story: dict):
           'endpoint': context.environments[target['environment']]['pipelineEndpoint'],
           'sharedSecret': sharedSecret,
           'outStep': receivingStep,
+          'architectureId': context.id,
+          'pipelineId': pipelineId,
         }],
       }
       newStory[receivingStep] = {

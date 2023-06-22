@@ -188,7 +188,7 @@ def main(doc, root=False, command=None, debug=False):
   context.doc['datasets'] = compileDatasets(context.datasets)
   if command == 'datasets': print(context.datasets); exit(0)
 
-  environmentResolvedStories = [resolveEnvironment(normalizeEnvironment(story)) for story in prePostStories]
+  environmentResolvedStories = [resolveEnvironment(pipelineId, normalizeEnvironment(story)) for pipelineId, story in enumerate(prePostStories)]
   if command == 'environments': printStoriesDict(environmentResolvedStories); exit(0)
 
   conditionStories.loadDir('condition')
