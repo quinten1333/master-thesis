@@ -12,6 +12,10 @@ class Doc:
     return self.doc['name']
 
   @property
+  def id(self):
+    return self.doc['id']
+
+  @property
   def endpoint(self):
     return self.doc['endpoint']
 

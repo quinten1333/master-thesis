@@ -10,6 +10,7 @@ const genEnvConfig = (arch) => {
 
     res[env] = {
       name: arch.name,
+      id: arch.id,
       ...arch.environments[env],
     };
   }

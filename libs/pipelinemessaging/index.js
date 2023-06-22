@@ -123,6 +123,7 @@ class MSAArchitecture {
     this.archIO = archIO;
     this.functions = functions;
     this.validateIO();
+    this.id = this.archIO.id;
 
     this.started = false;
     this.conn = null;
@@ -131,6 +132,10 @@ class MSAArchitecture {
   }
 
   validateIO() {
+    if (!this.archIO.id) {
+      throw new Error(`Id of architecture missing!`);
+    }
+
     if (!this.archIO.endpoint) {
       throw new Error(`Endpoint of architecture missing!`);
     }
@@ -150,7 +155,7 @@ class MSAArchitecture {
     await this.conn.connect();
 
     for (const pipeId in this.archIO.pipelines) {
-      const pipeline = new MSAPipeline(this.archIO.pipelines[pipeId], this.functions, this.conn);
+      const pipeline = new MSAPipeline(pipeId, this.archIO.pipelines[pipeId], this.functions, this.conn);
       await pipeline.start();
       this.pipelines.push(pipeline);
     }
@@ -168,7 +173,8 @@ class MSAArchitecture {
 }
 
 class MSAPipeline {
-  constructor(pipeIO, functions, conn) {
+  constructor(pipeId, pipeIO, functions, conn) {
+    this.pipeId = pipeId;
     this.pipeIO = pipeIO;
     this.functions = functions;
     this.conn = conn;

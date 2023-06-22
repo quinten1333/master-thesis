@@ -57,6 +57,8 @@ def printStoriesDict(userStories: dict):
 def validateInput(doc):
   if 'name' not in doc :
     raise InputError('No name given in YAML doc')
+  if 'id' not in doc :
+    raise InputError('No id given in YAML doc')
   if 'environments' not in doc :
     raise InputError('No environments given in YAML doc')
   if 'datasets' not in doc:
