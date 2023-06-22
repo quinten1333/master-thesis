@@ -257,6 +257,10 @@ class MSAPipeline {
   }
 
   getOutput = (output, context, post) => {
+    if (post === null) {
+      return context.data
+    }
+
     if (!post) {
       return output;
     }
