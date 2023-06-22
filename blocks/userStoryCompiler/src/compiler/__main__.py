@@ -1,6 +1,5 @@
 import sys
 import yaml
-from collections import defaultdict
 from pathlib import Path
 
 from .exceptions import *
@@ -8,8 +7,10 @@ from .Context import context
 from .normalize import normalizeStory
 from .TextAnalyser import tokenizeStory
 from .Story.Manager import StoryManager
+from .cfg import genCFG, unfoldCFG, controllFlowGraphKeywords, cleanupCFG, getTargetIds
 from .prepost import compilePrePost
 from .datasets import compileDatasets
+from .environments import validateEnvironments, normalizeEnvironment, resolveEnvironment, pipelinesPerEnvironment
 
 serviceStories = StoryManager()
 conditionStories = StoryManager()
@@ -56,8 +57,8 @@ def printStoriesDict(userStories: dict):
 def validateInput(doc):
   if 'name' not in doc :
     raise InputError('No name given in YAML doc')
-  if 'endpoint' not in doc :
-    raise InputError('No endpoint given in YAML doc')
+  if 'environments' not in doc :
+    raise InputError('No environments given in YAML doc')
   if 'datasets' not in doc:
     raise InputError('No datasets given in YAML doc')
   if 'userStories' not in doc :
@@ -107,165 +108,6 @@ def validateStory(userStory):
   for step in userStory['steps']:
     check_step(step)
 
-
-def genCFG(userStory: list) -> dict:
-  """
-    Make a controll flow graph from the list of steps by resolving the next
-    step, conditions and goto statements. All conditions are moved into the
-    command step that will execute the condition.
-  """
-  stepCount = 0
-
-  def getNextCommand(stepsDict, startId):
-    id = startId + 1
-    while id < stepCount and (id not in stepsDict or 'condition' in stepsDict[id]):
-      id += 1
-
-    if id == stepCount:
-      return None
-
-    return id
-
-  def getReturnConditions(stepsDict, startId):
-    id = startId + 1
-    conditions = []
-    while id < stepCount:
-      if id not in stepsDict:
-        id += 1
-        continue
-
-      if 'condition' not in stepsDict[id]:
-        break
-
-      # Dict is needed because the system currently expects the full story to
-      # be moved to the conditions array but here we are only doing a link.
-      # Because this is pass by reference the correct outStep will be added
-      # later in the process.
-      conditions.append({ -1: stepsDict[id]['condition'] })
-      id += 1
-
-    if len(conditions) == 0:
-      return None
-
-    return conditions
-
-  def resolveLocal(stepsDict, returnStep):
-    for stepId, step in stepsDict.items():
-      outStep = getNextCommand(stepsDict, stepId)
-      if outStep:
-        step['outStep'] = outStep
-
-  def addCondition(step, condition):
-    if 'outCondition' not in step:
-      step['outCondition'] = []
-
-    step['outCondition'].append(condition)
-
-  def _genCFG(userStory, returnStep=None, returnConditions=None):
-    nonlocal stepCount
-
-    if 'condition' not in userStory or 'steps' not in userStory:
-      print('Internal error: Did not receive a user story', file=sys.stderr)
-      exit(0)
-
-    steps = [userStory['condition'], *userStory['steps']]
-    stepsDict = {i + stepCount: step for i, step in enumerate(steps)}
-    stepCount += len(steps)
-
-    resolveLocal(stepsDict, returnStep)
-
-    lastCommand = 0
-    for stepId, step in { **stepsDict }.items(): # Move substories to command outCondition
-      if 'condition' in step:
-        addCondition(stepsDict[lastCommand], _genCFG(step, getNextCommand(stepsDict, stepId) or returnStep, getReturnConditions(stepsDict, stepId) or returnConditions))
-        del stepsDict[stepId]
-        continue
-
-      if 'op' in step and step['op'] == 'goto':
-        step['step'] = int(step['step']) + min(stepsDict.keys()) # Offset with id of condition from this story
-
-      lastCommand = stepId
-
-    if returnStep:
-      stepsDict[lastCommand]['outStep'] = returnStep
-
-    if returnConditions:
-      stepsDict[lastCommand]['outCondition'] = returnConditions
-
-    return stepsDict
-
-  return _genCFG(userStory)
-
-def unfoldCFG(stepsDict):
-  id = 0
-  while id <= max(stepsDict.keys()):
-    if id not in stepsDict:
-      id += 1
-      continue
-
-    step = stepsDict[id]
-    if 'outCondition' in step:
-      for sid, story in enumerate(step['outCondition']):
-        cid = min(story.keys())
-        condition = story[cid]
-        del story[cid]
-
-        step['outCondition'][sid] = {
-          'do': condition['do'],
-          'outStep': condition['outStep'],
-        }
-        stepsDict = { **stepsDict, **story }
-
-    id += 1
-
-  return stepsDict
-
-
-def getTargets(story: dict) -> list:
-  targets = []
-  if 'outStep' in story: targets.append(story)
-  if 'outCondition' in story: targets.extend(story['outCondition'])
-
-  return targets
-
-def controllFlowGraphKeywords(flattenedStory: dict) -> dict:
-  for story in flattenedStory.values():
-    for cond in getTargets(story):
-      target = flattenedStory[cond['outStep']]
-
-      if 'op' in target:
-        if target['op'] == 'stop':
-          del cond['outStep']
-        elif target['op'] == 'goto':
-          cond['outStep'] = int(target['step'])
-          if cond['outStep'] not in flattenedStory:
-            raise InputError('goto statement points to non-existing step. It is not possible to point a goto statement to a condition or other special operation at the moment.')
-
-
-  return flattenedStory
-
-def cleanupCFG(cfgStory: dict) -> dict:
-  """
-    Remove all steps which are no longer referenced by any other steps
-  """
-
-  count = defaultdict(lambda: 0)
-  count[0] += 1 # First step is always used at least once
-  res = {**cfgStory}
-
-  for step in cfgStory.values():
-    for target in getTargets(step):
-      if 'outStep' in target:
-        count[target['outStep']] += 1
-
-  for stepId in cfgStory.keys():
-    if count[stepId] != 0: continue
-
-    # print('Deleting step ', stepId)
-    del res[stepId]
-
-  return res
-
 def parseConditions(cfgStory: dict) -> dict:
   for step in cfgStory.values():
     if 'outCondition' not in step: continue
@@ -285,6 +127,10 @@ def parseConditions(cfgStory: dict) -> dict:
 def parseStory(cfgStory: dict) -> dict:
   steps = {}
   for stepId, step in cfgStory.items():
+    if 'do' not in step:
+      steps[stepId] = step
+      continue
+
     conf = serviceStories.findMatchingStory(step['do'])
 
     step = {
@@ -294,35 +140,31 @@ def parseStory(cfgStory: dict) -> dict:
 
     steps[stepId] = step
 
-  return {
-    'steps': steps
-  }
+  return steps
 
-def validatePipeline(pipeline: dict):
+
+def validatePipeline(steps: dict):
   """
   Simple check which validates if all referenced steps actually exist.
   """
-  steps: dict = pipeline['steps']
   for step in steps.values():
-    if 'outStep' in step:
-      assert step['outStep'] in steps
-
-    if 'outCondition' in steps:
-      for cond in steps['outCondition']:
-        assert 'outStep' in cond
-        assert cond['outStep'] in steps
+    for targetId in getTargetIds(step):
+      assert targetId in steps
 
 
 def main(doc, root=False, command=None, debug=False):
   validateInput(doc)
   context.set(doc) # Not thread safe
+  userStories = context.userStories
+  del doc['userStories']
 
-  resolvedStories = resolveStories(context.userStories, root) if root else context.userStories
+  resolvedStories = resolveStories(userStories, root) if root else userStories
   if command == 'resolved': print(resolvedStories); exit(0)
 
   normalStories = [normalizeStory(userStory) for userStory in resolvedStories]
   if command == 'normalized': printNormalStories(normalStories); exit(0)
 
+  validateEnvironments(context.environments)
   for normalStory in normalStories: validateStory(normalStory)
   if command == 'validated': printNormalStories(normalStories); print('validated'); exit(0)
 
@@ -344,16 +186,20 @@ def main(doc, root=False, command=None, debug=False):
   context.doc['datasets'] = compileDatasets(context.datasets)
   if command == 'datasets': print(context.datasets); exit(0)
 
+  environmentResolvedStories = [resolveEnvironment(normalizeEnvironment(story)) for story in prePostStories]
+  if command == 'environments': printStoriesDict(environmentResolvedStories); exit(0)
+
   conditionStories.loadDir('condition')
-  cfgCondParsedStories = [parseConditions(story) for story in prePostStories]
+  cfgCondParsedStories = [parseConditions(story) for story in environmentResolvedStories]
   if command == 'conditionsParsed': printStoriesDict(cfgCondParsedStories); exit(0)
 
   serviceStories.loadDir('service')
-  pipelines = [parseStory(userStory) for userStory in cfgCondParsedStories]
-  if command == 'pipelines': print(pipelines); exit(0)
-  doc['pipelines'] = pipelines
+  parsed = [parseStory(userStory) for userStory in cfgCondParsedStories]
+  if command == 'parsed': print(parsed); exit(0)
 
-  [validatePipeline(pipeline) for pipeline in pipelines]
+  [validatePipeline(pipeline) for pipeline in parsed]
+
+  doc['environments'] = pipelinesPerEnvironment(parsed)
 
   if command:
     print('Warning: Command not found')

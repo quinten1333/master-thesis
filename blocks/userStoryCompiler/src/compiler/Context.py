@@ -20,6 +20,10 @@ class Doc:
     return self.doc['datasets']
 
   @property
+  def environments(self):
+    return self.doc['environments']
+
+  @property
   def userStories(self):
     return self.doc['userStories']
 
