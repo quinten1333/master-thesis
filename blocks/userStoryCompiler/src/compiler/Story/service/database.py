@@ -37,9 +37,17 @@ query = Story(f'^query dataset {sobj}', lambda config, match, dataset: Database(
 query.register(Story('find one', lambda config, match: config.condition('one')))
 query.register(Story('match state', lambda config, match: config.condition('equal')))
 
-store = Story(f'^store dataset {sobj}', lambda config, match, dataset: Database(dataset, 'store'))
+store = Story(f'^store (?:in)? dataset {sobj}', lambda config, match, dataset: Database(dataset, 'store'))
+
+update = Story(f'^update dataset {sobj}', lambda config, match, dataset: Database(dataset, 'update'))
+update.register(Story('one', lambda config, match: config.condition('one')))
+
+delete = Story(f'^delete dataset {sobj}', lambda config, match, dataset: Database(dataset, 'delete'))
+delete.register(Story('one', lambda config, match: config.condition('one')))
 
 stories = [
   query,
   store,
+  update,
+  delete,
 ]
