@@ -1,1 +1,1 @@
-python ../../../blocks/userStoryCompiler/src/drawer/draw.py ../compiled.yml
+python ../../../blocks/userStoryCompiler/src/drawer/draw.py ../architecture/compiled.yml

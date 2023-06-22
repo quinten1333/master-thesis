@@ -20,7 +20,10 @@
   "containerEnv": {
     "ROOT": "thesis.${localEnv:DEV_ROOT}",
     "DEV_ROOT": "${localEnv:DEV_ROOT}",
-    "PROTOCOL": "https"
+    "PROTOCOL": "https",
+    "gatewayUrl": "http://gateway:3000",
+    "mongodbConStrEntity": "mongodb://dataset-mongodb:27017/entity_service",
+    "mongodbConStrUser": "mongodb://dataset-mongodb:27017/user_service"
   },
 
 	// Use 'forwardPorts' to make a list of ports inside the container available locally.

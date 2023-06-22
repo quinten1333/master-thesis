@@ -1,0 +1,56 @@
+- given: a http post request with path "/user/login" on port 3000 with parameter "email" of type "string" and a parameter "password" of type "string"
+  then:
+  - pre:
+      select:
+      - email
+    do: query dataset "db-users" find one match state
+    post:
+      upsert:
+      - password as dbpwd
+      - _id as uid
+      - __t
+      - repAdmin
+      - enid
+      - admin
+  - given: dbpwd equals `undefined`
+    then:
+    - pre:
+        select:
+        - '"User not found" as body'
+        - '`404` as status'
+      do: respond to the http request on port 3000
+    - stop
+  - pre:
+      select:
+      - password
+      - dbpwd as hash
+    do: compare hash
+    post:
+      set: comparison
+      unset:
+      - password
+      - dbpwd
+  - given: comparison not equal `true`
+    then:
+    - pre:
+        select:
+          - '"Incorrect password" as body'
+          - '`401` as status'
+      do: respond to the http request on port 3000
+    - stop
+  - pre:
+      select:
+      - uid as payload.uid
+      - email as payload.email
+      - __t as payload.type
+      - repAdmin as payload.repAdmin
+      - enid as payload.enid
+      - admin as payload.admin
+    do: create JWT token with secret "jwtSecret" with algorithm "HS512" which expires in "1h" is issued by "QRCSoftware" is not used before "0s" with subject "ThesisfairAPI Key"
+    post:
+      set: token
+  - pre:
+      select:
+      - token as JWTToken
+    do: respond to the http request on port 3000
+

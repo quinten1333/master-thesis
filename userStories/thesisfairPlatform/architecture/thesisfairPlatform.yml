@@ -1,0 +1,20 @@
+name: Thesis Fair Platform
+endpoint: amqp://rabbitmq
+datasets:
+  db-entities:
+    type: mongodb
+    url: mongodb://dataset-mongodb
+    db: entity_service
+    collection: entities
+  db-users:
+    type: mongodb
+    url: mongodb://dataset-mongodb
+    db: user_service
+    collection: users
+  jwtSecret:
+    type: secret
+    generate: true
+    size: 1024
+userStories:
+- import ./entityService.yml
+- import ./userService.yml

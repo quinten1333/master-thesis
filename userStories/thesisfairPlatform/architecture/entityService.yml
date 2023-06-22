@@ -1,0 +1,343 @@
+# Queries
+- given: a http get request with path "/entity" on port 3000 with parameter "token" of type "string" and a parameter "enid" of type "string"
+  then:
+  - pre:
+      select:
+      - token
+    do: validate JWT with secret "jwtSecret"
+    post:
+      set: token
+  - pre:
+      select:
+      - enid as _id
+    do: query dataset "db-entities" find one match state
+    post:
+      set: res
+      upsert:
+      - _id as res.enid
+      unset:
+      - res._id
+      - res.__v
+      - res.contact[]._id
+  - pre:
+      select:
+      - res as body
+    do: respond to the http request on port 3000
+
+- given: a http get request with path "/entity/all" on port 3000 with parameter "token" of type "string"
+  then:
+  - pre:
+      select:
+      - token
+    do: validate JWT with secret "jwtSecret"
+    post:
+      set: token
+  - given: token.admin not equals `true`
+    then:
+    - pre:
+        select:
+        - '`{ "errors": "UNAUTHORIZED get all entities" }` as body'
+        - '`401` as status'
+      do: respond to the http request on port 3000
+    - stop
+  - pre:
+      pick: '`{}`'
+    do: query dataset "db-entities" match state
+    post:
+      set: res
+      upsert:
+      - '[]._id as res[].enid'
+      unset:
+      - res[]._id
+      - res[].__v
+      - res[].contact[]._id
+  - pre:
+      pick: res
+    do: respond to the http request on port 3000
+
+- given: a http get request with path "/entities" on port 3000 with parameter "token" of type "string" and parameter "enids" of type "array"
+  then:
+  - pre:
+      select:
+      - token
+    do: validate JWT with secret "jwtSecret"
+    post:
+      set: token
+  - pre:
+      select:
+      - enids as _id.$in
+    do: query dataset "db-entities" match state
+    post:
+      set: res
+      upsert:
+      - '[]._id as res[].enid'
+      unset:
+      - res[]._id
+      - res[].__v
+      - res[].contact[]._id
+  - pre:
+      select:
+      - res as body
+    do: respond to the http request on port 3000
+
+# Mutation
+- given: a http post request with path "/entity" on port 3000 with parameter "token" of type "string" and parameter "name" of type "string" and optional parameter "description" of type "string" and parameter "type" of type "string" and optional parameter "contact" of type "object" and optional parameter "external_id" of type "number" and optional parameter "representatives" of type "number" and optional parameter "location" of type "string"
+  then:
+  - pre:
+      select:
+      - token
+    do: validate JWT with secret "jwtSecret"
+    post:
+      set: token
+  - given: token.admin not equals `true`
+    then:
+    - pre:
+        select:
+        - '`{ "errors": "UNAUTHORIZED create entity" }` as body'
+        - '`401` as status'
+      do: respond to the http request on port 3000
+    - stop
+  - given: 'type not in `["company", "research"]`'
+    then:
+    - pre:
+        select:
+        - '"invalid company type" as body.errors'
+        - type as body.type
+        - '`400` as status'
+      do: respond to the http request on port 3000
+    - stop
+  - given: 'fn "(context) => {
+    const options = ["website", "email", "phonenumber"];
+    for (const contact of context.contact) {
+      if(!options.includes(contact.type)) { console.log(contact.type); return true; }
+    }
+    return false;
+    }"'
+    then:
+    - pre:
+        select:
+        - '"Invalid type for contact entry" as body.errors'
+        - '`400` as status'
+      do: respond to the http request on port 3000
+    - stop
+  - pre:
+      select:
+      - name
+      - description
+      - type
+      - contact
+      - external_id
+      - representatives
+      - location
+    do: store in dataset "db-entities"
+    post:
+      set: enid
+      unset:
+      - token
+  - respond to http request on port 3000
+
+
+- given: a http patch request with path "/entity" on port 3000 with parameter "token" of type "string" and parameter "enid" of type "string" and optional parameter "name" of type "string" and optional parameter "description" of type "string" and optional parameter "type" of type "string" and optional parameter "contact" of type "object" and optional parameter "external_id" of type "number" and optional parameter "representatives" of type "number" and optional parameter "location" of type "string"
+  then:
+  - pre:
+      select:
+      - token
+    do: validate JWT with secret "jwtSecret"
+    post:
+      set: token
+  - given: fn "(context) => context.token.admin !== true && context.type"
+    then:
+    - pre:
+        select:
+        - '`{ "errors": "UNAUTHORIZED update entity type" }` as body'
+        - '`401` as status'
+      do: respond to the http request on port 3000
+    - stop
+  - given: fn "(context) => !(context.token.admin || (context.token.repAdmin === true && context.token.enid === context.enid))"
+    then:
+    - pre:
+        select:
+        - '`{ "errors": "UNAUTHORIZED update this entity" }` as body'
+        - '`401` as status'
+      do: respond to the http request on port 3000
+    - stop
+  - given: fn "(context) => context.type && !["company", "research"].includes(context.type)"
+    then:
+    - pre:
+        select:
+        - '"invalid company type" as body.errors'
+        - type as body.type
+        - '`400` as status'
+      do: respond to the http request on port 3000
+    - stop
+  - given: 'fn "(context) => {
+    if (!context.contact) {
+      return false;
+    }
+
+    const options = ["website", "email", "phonenumber"];
+    for (const contact of context.contact) {
+      if(!options.includes(contact.type)) { return true; }
+    }
+    return false;
+    }"'
+    then:
+    - pre:
+        select:
+        - '"Invalid type for contact entry" as body.errors'
+        - '`400` as status'
+      do: respond to the http request on port 3000
+    - stop
+  - pre:
+      select:
+      - enid as query._id
+      - name as set.$set.name
+      - description as set.$set.description
+      - type as set.$set.type
+      - contact as set.$set.contact
+      - external_id as set.$set.external_id
+      - representatives as set.$set.representatives
+      - location as set.$set.location
+    do: update dataset "db-entities" one
+    post:
+  - pre:
+      select:
+      - enid as _id
+    do: query dataset "db-entities" find one
+    post:
+      set: res
+      upsert:
+      - _id as res.enid
+      unset:
+      - res._id
+      - res.__v
+  - pre:
+      select:
+      - res as body
+    do: respond to http request on port 3000
+
+- given: a http delete request with path "/entity" on port 3000 with parameter "token" of type "string" and a parameter "enid" of type "string"
+  then:
+  - pre:
+      select:
+      - token
+    do: validate JWT with secret "jwtSecret"
+    post:
+      set: token
+  - given: token.admin not equals `true`
+    then:
+    - pre:
+        select:
+        - '`{ "errors": "UNAUTHORIZED delete entity" }` as body'
+        - '`401` as status'
+      do: respond to the http request on port 3000
+    - stop
+  - pre:
+      select:
+      - enid as _id
+    do: query dataset "db-entities" find one match state
+    post:
+      set: res
+      upsert:
+      - _id as res.enid
+      unset:
+      - res._id
+      - res.__v
+      - res.contact[]._id
+  - pre:
+      select:
+      - enid as _id
+    do: delete from dataset "db-entities" one
+    post:
+  - pre:
+      select:
+      - res as body
+    do: respond to the http request on port 3000
+
+
+- given: a http post request with path "/entity/import" on port 3000 with parameter "token" of type "string" and a parameter "entities" of type "object"
+  then:
+  - pre:
+      select:
+      - token
+    do: validate JWT with secret "jwtSecret"
+    post:
+      set: token
+      initArray: res
+  - given: token.admin not equals `true`
+    then:
+    - pre:
+        select:
+        - '`{ "errors": "UNAUTHORIZED delete entity" }` as body'
+        - '`401` as status'
+      do: respond to the http request on port 3000
+    - stop
+  # 3
+  - pre:
+      pick: entities
+    do: shift array # Poping is more efficient but results in a different order than the original application, making the tests fail.
+    post:
+      set: entityConf
+  - given: entityConf equal `undefined` # Loop finished
+    then:
+    - pre:
+        select:
+        - res as body
+      do: respond to the http request on port 3000
+    - stop
+  - pre:
+      select:
+      - entityConf.ID as external_id
+    do: query dataset "db-entities" find one
+    post:
+      set: entity
+  - given: fn "(context) => !context.entity && context.entityConf.enabled"
+    then:
+    - pre:
+        select:
+        - entityConf.name as name
+        - entityConf.ID as external_id
+        - entityConf.representatives as representatives
+        - '"company" as type'
+      do: store in dataset "db-entities"
+      post:
+  - given: fn "(context) => context.entity && context.entityConf.enabled"
+    then:
+    - pre:
+        select:
+        - entityConf.ID as query.external_id
+        - entityConf.name as set.$set.name
+        - entityConf.representatives as set.$set.representatives
+      do: update dataset "db-entities" one
+      post:
+  - given: fn "(context) => context.entity && !context.entityConf.enabled"
+    then:
+    - pre:
+        select:
+        - entityConf.ID as external_id
+      do: delete from dataset "db-entities" one
+      post:
+  - given: entityConf.enabled equals `true`
+    then:
+    - pre:
+        select:
+        - res as array
+        - entityConf.ID as value.entity.external_id
+        - entityConf.name as value.entity.name
+        - entityConf.representatives as value.entity.representatives
+        - '`null` as value.error'
+      do: push array
+      post:
+        set: res
+  - given: entityConf.enabled not equals `true`
+    then:
+    - pre:
+        select:
+        - res as array
+        - '`null` as value.entity'
+        - '`null` as value.error'
+      do: push array
+      post:
+        set: res
+  - goto 3 # Create loop until the stack is empty.
+
