@@ -1,4 +1,5 @@
 version: "3"
+name: master-thesis
 services:
   rabbitmq:
     image: rabbitmq:3-management
@@ -131,6 +132,30 @@ services:
       IOConfig: '{ "archEndpoint": "amqp://rabbitmq", "archExchange": "arch-management-mongodb" }'
       DEBUG: 'mongodb:*'
       DEBUG_COLORS: true
+    depends_on:
+      rabbitmq:
+        condition: service_healthy
+
+  multiEnvironment:
+    image: node:latest
+    entrypoint: npm run dev
+    working_dir: /app
+    volumes:
+      - ./blocks/multiEnvironment/:/app
+      - ./libs:/app/node_modules/@amicopo
+    environment:
+      PORT: 80
+      IOConfig: '{ "archEndpoint": "amqp://rabbitmq", "archExchange": "arch-management-multiEnvironment" }'
+      DEBUG: 'multiEnvironment:*'
+      DEBUG_COLORS: true
+    expose:
+    - 80
+    labels:
+      traefik.enable: true
+      traefik.http.routers.thesis-multiEnv.rule: Host(`pipeline.${ROOT}`)
+    networks:
+    - default
+    - traefik
     depends_on:
       rabbitmq:
         condition: service_healthy

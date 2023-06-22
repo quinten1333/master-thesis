@@ -69,6 +69,20 @@ services:
       rabbitmq:
         condition: service_healthy
 
+  multiEnvironment:
+    image: ghcr.io/quinten1333/mt-blocks:multiEnvironment
+    environment:
+      IOConfig: '{ "archEndpoint": "amqp://rabbitmq", "archExchange": "arch-management-multiEnvironment" }'
+    labels:
+      traefik.enable: true
+      traefik.http.routers.thesis-multiEnv-dev2.rule: Host(`pipeline.dev2.${ROOT}`)
+    networks:
+    - default
+    - traefik
+    depends_on:
+      rabbitmq:
+        condition: service_healthy
+
   filesystem:
     image: ghcr.io/quinten1333/mt-blocks:filesystem
     environment:
