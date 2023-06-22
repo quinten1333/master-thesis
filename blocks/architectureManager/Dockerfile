@@ -1,7 +1,7 @@
 FROM node:alpine
 LABEL org.opencontainers.image.source https://github.com/quinten1333/master-thesis
 
-ARG NODE_ENV=production
+ARG NODE_ENV=development
 ENV NODE_ENV=${NODE_ENV}
 ENV PORT=80
 EXPOSE 80
