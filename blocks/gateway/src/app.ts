@@ -9,14 +9,14 @@ type Pipeline = any;
 export type Route = {
   method?: string
   path: string
-  params: { [name: string]: { type: string } }
+  params: { [name: string]: { type: string, optional: boolean } }
   pipeline: Pipeline
 };
 
 type CompiledRoutes = {
   [method: string]: {
     [path: string]: {
-      params: { [name: string]: { type: string } }
+      params: { [name: string]: { type: string, optional: boolean } }
       pipeline: Pipeline
     }
   }
@@ -125,8 +125,13 @@ class Server {
     for (const param in route.params) {
       const data = req.method === 'GET' ? req.query : req.body;
 
-      if (!(param in data)) { next({ status: 400, message: `Missing parameter "${param}".`}); return; }
       const paramConf = route.params[param];
+      if (!(param in data)) {
+        if (paramConf.optional) { continue; }
+
+        next({ status: 400, message: `Missing parameter "${param}".`});
+        return;
+      }
 
       params[param] = this.parseValue(paramConf.type, data[param]);
       if (params[param] === undefined) { next({ status: 400, message: `Parameter "${param}" does not have type "${paramConf.type}".` }); return; }
