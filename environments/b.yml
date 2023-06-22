@@ -1,0 +1,101 @@
+version: "3"
+name: master-thesis-env-b
+services:
+  rabbitmq:
+    image: rabbitmq:3-management
+    hostname: 'rabbitmq'
+    volumes:
+      - ../rabbitmq.conf:/etc/rabbitmq/conf.d/11-custom.conf
+
+    healthcheck:
+      test: rabbitmq-diagnostics -q ping
+      interval: 10s
+      timeout: 5s
+      retries: 3
+      start_period: 30s
+
+  architectureManager:
+    image: ghcr.io/quinten1333/mt-blocks:architectureManager
+    environment:
+      IOConfig: '{ "endpoint": "amqp://rabbitmq" }'
+      DEBUG: architectureManager
+      DEBUG_COLORS: true
+
+    labels:
+      traefik.enable: true
+      traefik.http.routers.thesis-b-archManager.rule: Host(`b.${ROOT}`)
+    networks:
+    - default
+    - traefik
+    depends_on:
+      rabbitmq:
+        condition: service_healthy
+
+  auth:
+    image: ghcr.io/quinten1333/mt-blocks:auth
+    environment:
+      IOConfig: '{ "archEndpoint": "amqp://rabbitmq", "archExchange": "arch-management-auth" }'
+      DEBUG: 'auth:*'
+      DEBUG_COLORS: true
+    depends_on:
+      rabbitmq:
+        condition: service_healthy
+
+  gateway:
+    image: ghcr.io/quinten1333/mt-blocks:gateway
+    environment:
+      IOConfig: '{ "archEndpoint": "amqp://rabbitmq", "archExchange": "arch-management-gateway" }'
+      DEBUG: 'gateway:*'
+      DEBUG_COLORS: true
+    depends_on:
+      rabbitmq:
+        condition: service_healthy
+    expose:
+    - 3000
+    labels:
+      traefik.enable: true
+      traefik.http.routers.thesis-b-gateway.rule: Host(`gateway.b.${ROOT}`)
+    networks:
+    - default
+    - traefik
+
+  mongodb:
+    image: ghcr.io/quinten1333/mt-blocks:mongodb
+    environment:
+      IOConfig: '{ "archEndpoint": "amqp://rabbitmq", "archExchange": "arch-management-mongodb" }'
+      DEBUG: 'mongodb:*'
+      DEBUG_COLORS: true
+    depends_on:
+      rabbitmq:
+        condition: service_healthy
+
+  filesystem:
+    image: ghcr.io/quinten1333/mt-blocks:filesystem
+    environment:
+      IOConfig: '{ "archEndpoint": "amqp://rabbitmq", "archExchange": "arch-management-filesystem" }'
+    depends_on:
+      rabbitmq:
+        condition: service_healthy
+
+  util:
+    image: ghcr.io/quinten1333/mt-blocks:util
+    environment:
+      IOConfig: '{ "archEndpoint": "amqp://rabbitmq", "archExchange": "arch-management-util" }'
+    depends_on:
+      rabbitmq:
+        condition: service_healthy
+
+  dataset-mongodb:
+    image: mongo
+    command: mongod --quiet --logpath /dev/null
+    volumes:
+      - mongodb:/data/db
+
+volumes:
+  mongodb:
+
+networks:
+  default:
+  traefik:
+    name: traefik
+    external: true
