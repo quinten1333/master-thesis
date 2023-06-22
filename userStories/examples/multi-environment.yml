@@ -1,0 +1,31 @@
+name: x+2-10
+id: 101
+datasets:
+environments:
+  a:
+    managementEndpoint: https://thesis.dev.qrcsoftware.nl
+    pipelineEndpoint: https://pipeline.thesis.dev.qrcsoftware.nl
+    endpoint: amqp://rabbitmq
+    default: true
+  b:
+    managementEndpoint: https://dev2.thesis.dev.qrcsoftware.nl
+    pipelineEndpoint: https://pipeline.dev2.thesis.dev.qrcsoftware.nl
+    endpoint: amqp://rabbitmq
+userStories:
+- given: a http get request with path "/" on port 3000 with parameter "input" which is of type "number"
+  then:
+  - log state
+  - pre:
+      select:
+      - input as a
+      - '`2` as b'
+    do: plus
+    post:
+      set: res
+  - pre:
+      select:
+      - res as a
+      - '`10` as b'
+    do: minus
+    environment: b
+  - respond to the http request on port 3000
