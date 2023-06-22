@@ -3,6 +3,7 @@ export default class Architecture {
     this.conn = conn;
 
     this.id = id;
+    this.external_id = arch.id;
     this.name = arch.name;
     this.datasets = arch.datasets || [];
     this.pipelines = arch.pipelines;
@@ -49,6 +50,7 @@ export default class Architecture {
 
         if (!(stepConfig.block in result)) {
           result[stepConfig.block] = {
+            id: this.external_id,
             endpoint: this.endpoint,
             pipelines: {}
           }
