@@ -320,7 +320,7 @@ class MSAPipeline {
       const input = this.getInput(context, stepConfig.pre);
       debug('Executing function %s with input %s', stepConfig.fn, input);
       try {
-        output = await this.functions[stepConfig.fn]({...data, context: undefined, input: input, pipeline: this }, ...stepConfig.extraArgs);
+        output = await this.functions[stepConfig.fn]({reqId: data.reqId, input: input, pipeline: this }, ...stepConfig.extraArgs);
       } catch (err) {
         this.handleError(err, data, queueConfig, stepConfig);
         return;
@@ -370,18 +370,29 @@ class MSAPipeline {
     }
   }
 
-  run = (input, metadata = {}) => {
-    if (!this.initialStep) {
+  /**
+   * Starts the pipeline with an initial value.
+   * It is possible to override the step and context, effectivaly continueing an existing pipeline. Be sure to know exactly what you are doing!
+   * This should only be used in situations where the normal communication flow is not possible.
+   * @param {Object} input The initial data of the architecture
+   * @param {number} overrideStep Override the step
+   * @param {Object} overrideContext Override the initial context with a non-empty dictionary
+   * @returns
+   */
+  run = (input, overrideStep = null, overrideContext = null, overrideReqId = null) => {
+    if (!this.initialStep && !overrideStep) {
       throw new Error('ArchIO does not have a step 0 so this node is not configured to be the entrypoint');
     }
     if (!this.started) {
       throw new Error('Architecture not started but tried to run it!')
     }
 
-    const reqId = ++this.reqIdCounter;
-    const outContext = this.getOutput(input, {}, this.initialStep.post);
-    const [outQueue, outStep] = this.getOutdata(this.initialStep, outContext);
-    this.conn.send(outQueue, { ...metadata, reqId, step: outStep, context: outContext });
+    const step = overrideStep || this.initialStep; // this.pipeIO.queues[<queue>].steps[<step>]
+
+    const reqId = overrideReqId || ++this.reqIdCounter;
+    const outData = this.getOutput(input, new Context(overrideContext || {}), step.post);
+    const [outQueue, outStep] = this.getOutdata(step, outData);
+    this.conn.send(outQueue, { reqId, step: outStep, context: outData });
 
     return reqId;
   }
