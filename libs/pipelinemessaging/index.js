@@ -391,6 +391,7 @@ class Context {
     let key;
     path = [...path];
     while (path.length > 0) {
+      if (!cur) { console.warn('Path lead to non object value before finishing!'); return; } // Invalid path
       key = path.shift();
 
       if (key.endsWith('[]')) {
@@ -427,7 +428,9 @@ class Context {
   get(key) {
     const res = [];
     this.resolve(key, (parent, childKey) => {
-      res.push(parent[childKey]);
+      if (parent) {
+        res.push(parent[childKey]);
+      }
     });
 
     if (res.length === 1) {
@@ -469,7 +472,9 @@ class Context {
 
   unset(key) {
     this.resolve(key, (parent, childKey) => {
-      delete parent[childKey];
+      if (parent) {
+        delete parent[childKey];
+      }
     });
   }
 
