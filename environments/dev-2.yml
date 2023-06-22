@@ -1,0 +1,183 @@
+version: "3"
+name: master-thesis-dev2
+services:
+  rabbitmq:
+    image: rabbitmq:3-management
+    hostname: 'rabbitmq'
+    volumes:
+      - ../rabbitmq.conf:/etc/rabbitmq/conf.d/11-custom.conf
+
+    healthcheck:
+      test: rabbitmq-diagnostics -q ping
+      interval: 10s
+      timeout: 5s
+      retries: 3
+      start_period: 30s
+
+  # architectureManager-frontend:
+  #   image: node:latest
+  #   entrypoint: npm start
+  #   working_dir: /app
+  #   volumes:
+  #     - ../blocks/architectureManager/frontend:/app
+  #   environment:
+  #     PORT: 443
+  #     REACT_APP_ROOT: dev2.${ROOT}
+  #     REACT_APP_PROTOCOL: ${PROTOCOL}
+  #   expose:
+  #   - 443
+
+  #   labels:
+  #     traefik.enable: true
+  #     traefik.http.routers.thesis-dev2.rule: Host(`dev2.${ROOT}`)
+  #   networks:
+  #   - default
+  #   - traefik
+
+  architectureManager:
+    image: node:latest
+    entrypoint: npm run dev:js
+    working_dir: /app
+    expose:
+      - 80
+    volumes:
+      - ../blocks/architectureManager/:/app
+      - ../libs:/app/node_modules/@amicopo
+    environment:
+      PORT: 80
+      NODE_ENV: development
+      IOConfig: '{ "endpoint": "amqp://rabbitmq" }'
+      DEBUG: architectureManager
+      DEBUG_COLORS: true
+
+    labels:
+      traefik.enable: true
+      traefik.http.routers.thesis-archManager-dev2.rule: Host(`dev2.${ROOT}`) && PathPrefix(`/api`)
+    networks:
+    - default
+    - traefik
+    depends_on:
+      rabbitmq:
+        condition: service_healthy
+
+  auth:
+    image: node:latest
+    entrypoint: npm run dev:js
+    working_dir: /app
+    volumes:
+      - ../blocks/auth/:/app
+      - ../libs:/app/node_modules/@amicopo
+    environment:
+      IOConfig: '{ "archEndpoint": "amqp://rabbitmq", "archExchange": "arch-management-auth" }'
+      DEBUG: 'auth:*'
+      DEBUG_COLORS: true
+    depends_on:
+      rabbitmq:
+        condition: service_healthy
+
+  gateway:
+    image: node:latest
+    entrypoint: npm run dev:js
+    working_dir: /app
+    volumes:
+      - ../blocks/gateway/:/app
+      - ../libs:/app/node_modules/@amicopo
+    environment:
+      IOConfig: '{ "archEndpoint": "amqp://rabbitmq", "archExchange": "arch-management-gateway" }'
+      DEBUG: 'gateway:*'
+      DEBUG_COLORS: true
+    depends_on:
+      rabbitmq:
+        condition: service_healthy
+    expose:
+    - 3000
+    labels:
+      traefik.enable: true
+      traefik.http.routers.thesis-gateway-dev2.rule: Host(`gateway.dev2.${ROOT}`)
+    networks:
+    - default
+    - traefik
+
+  mongodb:
+    image: node:latest
+    entrypoint: npm run dev:js
+    working_dir: /app
+    volumes:
+      - ../blocks/mongodb/:/app
+      - ../libs:/app/node_modules/@amicopo
+    environment:
+      IOConfig: '{ "archEndpoint": "amqp://rabbitmq", "archExchange": "arch-management-mongodb" }'
+      DEBUG: 'mongodb:*'
+      DEBUG_COLORS: true
+    depends_on:
+      rabbitmq:
+        condition: service_healthy
+
+  multiEnvironment:
+    image: node:latest
+    entrypoint: npm run dev:js
+    working_dir: /app
+    volumes:
+      - ../blocks/multiEnvironment/:/app
+      - ../libs:/app/node_modules/@amicopo
+    environment:
+      PORT: 80
+      IOConfig: '{ "archEndpoint": "amqp://rabbitmq", "archExchange": "arch-management-multiEnvironment" }'
+      DEBUG: 'multiEnvironment:*'
+      DEBUG_COLORS: true
+    expose:
+    - 80
+    labels:
+      traefik.enable: true
+      traefik.http.routers.thesis-multiEnv-dev2.rule: Host(`pipeline.dev2.${ROOT}`)
+    networks:
+    - default
+    - traefik
+    depends_on:
+      rabbitmq:
+        condition: service_healthy
+
+  filesystem:
+    image: node:latest
+    entrypoint: npm run dev:js
+    working_dir: /app
+    volumes:
+      - ../blocks/filesystem/:/app
+      - ../libs:/app/node_modules/@amicopo
+    environment:
+      IOConfig: '{ "archEndpoint": "amqp://rabbitmq", "archExchange": "arch-management-filesystem" }'
+      DEBUG: ''
+      DEBUG_COLORS: true
+    depends_on:
+      rabbitmq:
+        condition: service_healthy
+
+  util:
+    image: node:latest
+    entrypoint: npm run dev:js
+    working_dir: /app
+    volumes:
+      - ../blocks/util/:/app
+      - ../libs:/app/node_modules/@amicopo
+    environment:
+      IOConfig: '{ "archEndpoint": "amqp://rabbitmq", "archExchange": "arch-management-util" }'
+      DEBUG: ''
+      DEBUG_COLORS: true
+    depends_on:
+      rabbitmq:
+        condition: service_healthy
+
+  dataset-mongodb:
+    image: mongo
+    command: mongod --quiet --logpath /dev/null
+    volumes:
+      - mongodb:/data/db
+
+volumes:
+  mongodb:
+
+networks:
+  default:
+  traefik:
+    name: traefik
+    external: true
