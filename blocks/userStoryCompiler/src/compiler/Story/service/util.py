@@ -9,6 +9,9 @@ stories = [
 
   Story(f'^unpack {sobj}', lambda config, match, key: ({ 'block': 'util', 'fn': 'unpack', 'extraArgs': [ key ] })),
   Story(f'^pack {sobj}', lambda config, match, key: ({ 'block': 'util', 'fn': 'pack', 'extraArgs': [ key ] })),
+  Story(f'^pop array', lambda config, match: ({ 'block': 'util', 'fn': 'pop', 'extraArgs': [ ] })),
+  Story(f'^shift array', lambda config, match: ({ 'block': 'util', 'fn': 'shift', 'extraArgs': [ ] })),
+  Story(f'^push array', lambda config, match: ({ 'block': 'util', 'fn': 'push', 'extraArgs': [ ] })),
 
   Story(f'^set state {obj}', lambda config, match, value: ({ 'block': 'util', 'fn': 'set', 'extraArgs': [ objParse(value) ] })),
   Story('^log state', lambda config, match: ({ 'block': 'util', 'fn': 'log', 'extraArgs': [ ] })),

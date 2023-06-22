@@ -15,6 +15,9 @@ io.register('pack', ({ input }, key) => ({ [key]: input }));
 
 // Array
 io.register('select', ({ input }, i) => input[i]);
+io.register('shift', ({ input }: { input: Array<any> }) => input.shift())
+io.register('pop', ({ input }: { input: Array<any> }) => input.pop())
+io.register('push', ({ input }: { input: { array: Array<any>, value: any }}) => { input.array.push(input.value); return input.array; })
 
 // State
 io.register('set', (_, value) => value)
