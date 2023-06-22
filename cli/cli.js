@@ -6,6 +6,8 @@ import { genAPI } from '../blocks/architectureManager/frontend/src/api.js';
 const genEnvConfig = (arch) => {
   const res = {};
   for (const env in arch.environments) {
+    if (Object.keys(arch.environments[env].pipelines).length === 0) continue;
+
     res[env] = {
       name: arch.name,
       ...arch.environments[env],
