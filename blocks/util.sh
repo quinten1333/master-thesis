@@ -34,7 +34,7 @@ if [[ $block == 'all' ]]; then
       if [[ $cmd == 'build' || $cmd == 'push' ]]; then
         $cmd $dir
       else
-        $(cd "$dir" && block="$dir" sh -c "$cmd")
+        (cd "$dir" && block="$dir" sh -c "$cmd")
       fi
     fi
   done
