@@ -24,7 +24,7 @@ function build() {
 }
 
 function push() {
-  docker push -t ghcr.io/quinten1333/mt-blocks:$1
+  docker push ghcr.io/quinten1333/mt-blocks:$1
 }
 
 if [[ $block == 'all' ]]; then
