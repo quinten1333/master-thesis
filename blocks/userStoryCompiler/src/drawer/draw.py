@@ -55,7 +55,7 @@ def genImage(steps, type='jpg'):
       step['outStep'] = step['implicitOutStep']
 
     if 'outStep' in step:
-      graph += f'"{genName(stepId, steps)}" -> "{genName(step["outStep"], steps)}"\n'
+      graph += f'"{genName(stepId, steps)}" -> "{genName(step["outStep"], steps)}" [style="{"dotted" if "implicitOutStep" in step else "solid"}"]\n'
 
     if 'outCondition' in step:
       for cond in step['outCondition']:
