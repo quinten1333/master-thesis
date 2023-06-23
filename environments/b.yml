@@ -75,7 +75,7 @@ services:
       IOConfig: '{ "archEndpoint": "amqp://rabbitmq", "archExchange": "arch-management-multiEnvironment" }'
     labels:
       traefik.enable: true
-      traefik.http.routers.thesis-multiEnv-dev2.rule: Host(`pipeline.dev2.${ROOT}`)
+      traefik.http.routers.thesis-multiEnv-b.rule: Host(`pipeline.b.${ROOT}`)
     networks:
     - default
     - traefik
@@ -90,6 +90,17 @@ services:
     depends_on:
       rabbitmq:
         condition: service_healthy
+
+  userStoryCompiler:
+    image: ghcr.io/quinten1333/mt-blocks:userStoryCompiler
+    labels:
+      traefik.enable: true
+      traefik.http.routers.thesis-userStory-b.rule: Host(`b.${ROOT}`) && PathPrefix(`/userStory`)
+      traefik.http.routers.thesis-userStory-b.middlewares: thesis-userStory-StripPrefix-b
+      traefik.http.middlewares.thesis-userStory-StripPrefix-b.stripprefix.prefixes: /userStory
+    networks:
+    - default
+    - traefik
 
   util:
     image: ghcr.io/quinten1333/mt-blocks:util

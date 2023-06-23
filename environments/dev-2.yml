@@ -14,25 +14,25 @@ services:
       retries: 3
       start_period: 30s
 
-  # architectureManager-frontend:
-  #   image: node:latest
-  #   entrypoint: npm start
-  #   working_dir: /app
-  #   volumes:
-  #     - ../blocks/architectureManager/frontend:/app
-  #   environment:
-  #     PORT: 443
-  #     REACT_APP_ROOT: dev2.${ROOT}
-  #     REACT_APP_PROTOCOL: ${PROTOCOL}
-  #   expose:
-  #   - 443
+  architectureManager-frontend:
+    image: node:latest
+    entrypoint: npm start
+    working_dir: /app
+    volumes:
+      - ../blocks/architectureManager/frontend:/app
+    environment:
+      PORT: 443
+      REACT_APP_ROOT: dev2.${ROOT}
+      REACT_APP_PROTOCOL: ${PROTOCOL}
+    expose:
+    - 443
 
-  #   labels:
-  #     traefik.enable: true
-  #     traefik.http.routers.thesis-dev2.rule: Host(`dev2.${ROOT}`)
-  #   networks:
-  #   - default
-  #   - traefik
+    labels:
+      traefik.enable: true
+      traefik.http.routers.thesis-dev2.rule: Host(`dev2.${ROOT}`)
+    networks:
+    - default
+    - traefik
 
   architectureManager:
     image: node:latest
@@ -151,6 +151,25 @@ services:
     depends_on:
       rabbitmq:
         condition: service_healthy
+
+
+  userStoryCompiler:
+    image: ghcr.io/quinten1333/mt-blocks:userStoryCompiler
+    build: ../blocks/userStoryCompiler
+    command: --reload --log-level warning
+    expose:
+      - 80
+    volumes:
+      - ../blocks/userStoryCompiler/:/app
+
+    labels:
+      traefik.enable: true
+      traefik.http.routers.thesis-userStory-dev2.rule: Host(`dev2.${ROOT}`) && PathPrefix(`/userStory`)
+      traefik.http.routers.thesis-userStory-dev2.middlewares: thesis-userStory-StripPrefix-dev2
+      traefik.http.middlewares.thesis-userStory-StripPrefix-dev2.stripprefix.prefixes: /userStory
+    networks:
+    - default
+    - traefik
 
   util:
     image: node:latest
