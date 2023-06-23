@@ -67,6 +67,7 @@ def resolveEnvironment(pipelineId, story: dict):
           'architectureId': context.id,
           'pipelineId': pipelineId,
         }],
+        'implicitOutStep': receivingStep,
       }
       newStory[receivingStep] = {
         'block': 'multiEnvironment',
