@@ -9,7 +9,7 @@ RUN pip install --no-cache-dir -r requirements.txt
 COPY ./setup.py .
 RUN python3 setup.py
 
-COPY ./src .
+COPY ./src /app/src
 
 WORKDIR /app/src
 EXPOSE 80
