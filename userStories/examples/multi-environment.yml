@@ -2,12 +2,12 @@ name: x+2-10
 id: 101
 datasets:
 environments:
-  a:
+  dev:
     managementEndpoint: https://thesis.dev.qrcsoftware.nl
     pipelineEndpoint: https://pipeline.thesis.dev.qrcsoftware.nl
     endpoint: amqp://rabbitmq
     default: true
-  b:
+  dev2:
     managementEndpoint: https://dev2.thesis.dev.qrcsoftware.nl
     pipelineEndpoint: https://pipeline.dev2.thesis.dev.qrcsoftware.nl
     endpoint: amqp://rabbitmq
@@ -27,5 +27,5 @@ userStories:
       - res as a
       - '`10` as b'
     do: minus
-    environment: b
+    environment: dev2
   - respond to the http request on port 3000

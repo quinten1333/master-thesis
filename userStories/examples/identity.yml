@@ -1,5 +1,12 @@
 name: Identity
-endpoint: amqp://rabbitmq
+id: 2
+datasets:
+environments:
+  dev:
+    managementEndpoint: https://thesis.dev.qrcsoftware.nl
+    pipelineEndpoint: https://pipeline.thesis.dev.qrcsoftware.nl
+    endpoint: amqp://rabbitmq
+    default: true
 datasets:
 userStories:
 - given: a http request with path "/identity" on port 3000 with parameter "input" which is of type "number"

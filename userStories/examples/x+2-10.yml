@@ -1,6 +1,12 @@
 name: x+2-10
-endpoint: amqp://rabbitmq
+id: 4
 datasets:
+environments:
+  dev:
+    managementEndpoint: https://thesis.dev.qrcsoftware.nl
+    pipelineEndpoint: https://pipeline.thesis.dev.qrcsoftware.nl
+    endpoint: amqp://rabbitmq
+    default: true
 userStories:
 - given: a http get request with path "/" on port 3000 with parameter "input" which is of type "number"
   then:
