@@ -42,7 +42,6 @@ type StepPre = {
 
 type StepPost = {
     set: string
-    initArray: string
     upsert: Array<{
         from?: string
         value?: string
@@ -72,7 +71,6 @@ type archIOMerged = {
                 do?: string
                 post: {
                     set: string
-                    initArray: string
                     upsert: Array<{
                         from: string
                         to: string

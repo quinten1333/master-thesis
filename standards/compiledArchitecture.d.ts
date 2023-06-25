@@ -52,7 +52,6 @@ type Step = {
     do?: string
     post: {
         set: string
-        initArray: string
         upsert: Array<{
             from: string
             to: string
@@ -110,7 +109,6 @@ type CompiledArchitectureMerged = {
                 do?: string
                 post: {
                     set: string
-                    initArray: string
                     upsert: Array<{
                         from: string
                         to: string

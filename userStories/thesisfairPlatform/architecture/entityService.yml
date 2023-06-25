@@ -263,7 +263,8 @@
     do: validate JWT with secret "jwtSecret"
     post:
       set: token
-      initArray: res
+      upsert:
+      - '`[]` as res'
   - given: token.admin not equals `true`
     then:
     - pre:

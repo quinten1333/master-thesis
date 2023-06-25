@@ -56,7 +56,6 @@ pre:
 do: <user story>
 post:
   set: <key>
-  initArray: <key>
   upsert:
   - <key> [as <differentName>]
   unset:
@@ -71,6 +70,5 @@ It is possible to create objects inline using dots, for example `<key> as <level
 ##### post
 There are three post operations:
 - set: This assigns the output of the function to the supplied key.
-- initArray: Initialize an array at the given position.
-- upsert: Update or insert the given keys from the output dictionary in the state, optionally renaming them.
+- upsert: Update or insert the given keys from the output dictionary in the state, optionally renaming them. Or upserting hardcoded values into the state. This could be used to initialize arrays before filling them.
 - unset: Remove variables from the state which are no longer needed after that step.
