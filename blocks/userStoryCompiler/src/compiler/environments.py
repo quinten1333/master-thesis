@@ -17,11 +17,8 @@ def validateEnvironments(environments: dict):
 def normalizeEnvironment(story: dict):
   def getDefault():
     for env in context.environments:
-      if 'default' in context.environments[env]:
-        default = context.environments[env]['default']
-        del context.environments[env]['default']
-        if default:
-          return env
+      if 'default' in context.environments[env] and context.environments[env]['default']:
+        return env
 
     return None
   defaultEnv = getDefault()
