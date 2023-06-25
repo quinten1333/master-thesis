@@ -281,12 +281,14 @@ class MSAPipeline {
     }
 
     const res = new Context(virtualContext);
-    let value: any;
-    for (const key of pre.select) {
-      value = key.from ? context.get(key.from) : key.value;
-      if (value === undefined) { continue; }
-
-      res.set(key.to, value)
+    if (pre.select) {
+      let value: any;
+      for (const key of pre.select) {
+        value = key.from ? context.get(key.from) : key.value;
+        if (value === undefined) { continue; }
+  
+        res.set(key.to, value)
+      }
     }
 
     return res.data;
