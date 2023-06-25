@@ -1,5 +1,6 @@
 name: Thesis Fair Platform
 endpoint: amqp://rabbitmq
+id: 904
 datasets:
   db-entities:
     type: mongodb
@@ -15,6 +16,12 @@ datasets:
     type: secret
     generate: true
     size: 1024
+environments:
+  dev:
+    managementEndpoint: https://thesis.dev.qrcsoftware.nl
+    pipelineEndpoint: https://pipeline.thesis.dev.qrcsoftware.nl
+    endpoint: amqp://rabbitmq
+    default: true
 userStories:
 - import ./entityService.yml
 - import ./userService.yml

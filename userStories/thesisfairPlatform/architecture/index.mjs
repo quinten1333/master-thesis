@@ -17,10 +17,7 @@ async function main() {
     return;
   }
 
-  const yml = (await fs.readFile('./compiled.yml')).toString();
-  const id = await archApi.architecture.create(yml);
-  archApi.architecture.setActive(id, true);
-  console.log(id)
+  await execFilePromise('node', ['../../../cli/cli.js', './compiled.yml']);
 }
 
 main();
