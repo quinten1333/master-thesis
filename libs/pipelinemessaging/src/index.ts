@@ -305,10 +305,6 @@ class MSAPipeline {
       context.set(post.set, output);
     }
 
-    if (post.initArray) {
-      context.set(post.initArray, []);
-    }
-
     if (output && post.upsert) {
       const outputObj = new Context(output);
       for (const key of post.upsert) {
