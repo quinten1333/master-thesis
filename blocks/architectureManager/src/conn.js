@@ -1,4 +1,4 @@
-import AMQPConn from '@amicopo/pipelinemessaging/messaging.js';
+import AMQPConn from '@amicopo/pipelinemessaging/built/messaging.js';
 
 const config = JSON.parse(process.env.IOConfig);
 const conn = new AMQPConn(config.endpoint);
