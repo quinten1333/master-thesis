@@ -5,7 +5,18 @@ import config from './config.js';
 const debug = debugLib('messaging');
 
 export default class AMQPConn {
-  constructor(endpoint) {
+  endpoint: string
+  conn: amqp.Connection
+  channel: amqp.Channel
+  confirmChannel: amqp.ConfirmChannel
+
+  replyQueue: amqp.Replies.AssertQueue
+  sendInitialized: boolean
+  correlationId: number
+  correlationIds: { [correlationId: number]: any }
+  confirmChannelLastErr: any
+
+  constructor(endpoint: string) {
     this.endpoint = endpoint;
 
     this.conn = null;
@@ -60,7 +71,7 @@ export default class AMQPConn {
 
 
   //* Receiving
-  receive = async (queue, callback) => {
+  receive = async (queue: string, callback: (data: any) => any | undefined) => {
     this.channel.assertQueue(queue, {
       durable: false,
     });
@@ -88,20 +99,20 @@ export default class AMQPConn {
    * @param {String} exchange The exchange to subscribe to
    * @param {Function} callback The function that should be called for every message
    */
-  subscribe = async (exchange, callback) => {
+  subscribe = async (exchange: string, callback: (content: any) => void) => {
     await this.channel.assertExchange(exchange, 'fanout');
     const subscribeQueue = await this.channel.assertQueue('', { exclusive: true });
-    await this.channel.bindQueue(subscribeQueue.queue, exchange);
+    await this.channel.bindQueue(subscribeQueue.queue, exchange, '');
     this.channel.consume(subscribeQueue.queue, (msg) => callback(JSON.parse(msg.content.toString())), { noAck: true });
   }
 
   //* Sending
-  send = (queue, data) => {
+  send = (queue: string, data: any): void => {
     debug('Message no-reply send with data %s to %s', data, queue);
     this.channel.sendToQueue(queue, Buffer.from(JSON.stringify(data)), { timestamp: Date.now() });
   }
 
-  publish = async (exchange, data) => {
+  publish = async (exchange: string, data: any): Promise<void> => {
     if (!this.confirmChannel) {
       this.confirmChannel = await this.conn.createConfirmChannel();
       this.confirmChannelLastErr = null;
@@ -142,7 +153,7 @@ export default class AMQPConn {
    * by the RPC function.
    * @param {*} msg The message that has been received on the reply queue
   */
-  handleReply = (msg) => {
+  handleReply = (msg: amqp.ConsumeMessage) => {
     debug('Received message with correlationId: %d', msg.properties.correlationId);
 
     const callback = this.correlationIds[msg.properties.correlationId];
@@ -166,14 +177,14 @@ export default class AMQPConn {
    * @param {Object} data The data that should be sent.
    * @returns The response received via the reply queue
    */
-  rpc = (queue, data) => {
-    if (!sendInitialized) {
+  rpc = (queue: string, data: any) => {
+    if (!this.sendInitialized) {
       throw new Error('Sending is not initialized when rpc is called!');
     }
 
     return new Promise((resolve, reject) => {
       const id = this.genCorrelationId();
-      this.correlationIds[id] = (msg) => resolve(JSON.parse(msg.content.toString()));
+      this.correlationIds[id] = (msg: amqp.ConsumeMessage) => resolve(JSON.parse(msg.content.toString()));
 
       this.channel.sendToQueue(queue, Buffer.from(JSON.stringify(data)), { correlationId: id, replyTo: this.replyQueue.queue, timestamp: Date.now() });
       debug('Message send with corrolation id %d', id);

@@ -5,6 +5,9 @@
  * User can call start function which starts the listening and IO.
  * User can call the run function as entry point of running computations on the MSA.
  */
+type blockFunction = (input: { reqId: number, input: any, pipeline: MSAPipeline } | { pipeline: MSAPipeline, start: boolean }, ...args: any[]) => any;
+type functionsDict = { [name: string]: blockFunction }
+type InvocationData = { reqId: number, step: number, context: any}
 
 import AMQPConn from "./messaging.js";
 import debugLib from 'debug';
@@ -31,7 +34,7 @@ export function mergeOptions(input, args) {
  * @param {Object} originalDict The dictionary that will be cleaned
  * @returns A dict withoud any keys which have the value undefined
  */
-export function cleanDict(originalDict) {
+export function cleanDict(originalDict: { [key: string]: any }): { [key: string]: any } {
   const dict = {...originalDict};
 
   for (const key in originalDict) {
@@ -44,6 +47,12 @@ export function cleanDict(originalDict) {
 }
 
 export default class Pipelinemessaging {
+  started: boolean
+  config: PipelineMessagingConfig
+  conn: AMQPConn
+  functions: functionsDict
+  arches: { [id: number]: MSAArchitecture }
+
   constructor() {
     this.started = false;
     this.config = null;
@@ -53,7 +62,7 @@ export default class Pipelinemessaging {
     this.arches = {};
   }
 
-  register(name, fn) {
+  register(name: string, fn) {
     if (this.started) {
       throw new Error('Cannot register a function after messaging has started');
     }
@@ -64,7 +73,7 @@ export default class Pipelinemessaging {
     this.functions[name] = fn;
   }
 
-  readConfig(config) {
+  readConfig(config?: PipelineMessagingConfig) {
     this.config = config || JSON.parse(process.env.IOConfig);
 
     if (!this.config.archEndpoint) {
@@ -119,7 +128,15 @@ export default class Pipelinemessaging {
 }
 
 class MSAArchitecture {
-  constructor(archIO, functions) {
+  functions: functionsDict
+  archIO: archIO
+  id: number
+
+  started: boolean
+  conn: AMQPConn
+  pipelines: MSAPipeline[]
+
+  constructor(archIO: archIO, functions: functionsDict) {
     this.archIO = archIO;
     this.functions = functions;
     this.validateIO();
@@ -173,7 +190,19 @@ class MSAArchitecture {
 }
 
 class MSAPipeline {
-  constructor(pipeId, pipeIO, functions, conn) {
+  functions: { [name: string]: blockFunction }
+  pipeId: string
+  pipeIO: pipeIO
+
+  conn: AMQPConn
+
+  started: boolean
+  reqIdCounter: number
+
+  initialQueue: queue
+
+
+  constructor(pipeId: string, pipeIO: pipeIO, functions: functionsDict, conn: AMQPConn) {
     this.pipeId = pipeId;
     this.pipeIO = pipeIO;
     this.functions = functions;
@@ -219,7 +248,7 @@ class MSAPipeline {
               throw new Error(`Condition function is not set. Got condition: ${condition}`);
             }
 
-            condition.fn = eval(condition.fn); //! Insecure
+            condition.fn = eval(condition.fn as unknown as string); //! Insecure
             if (typeof condition.fn !== 'function') {
               throw new Error(`Condition function is not actually of type function! Got type ${typeof condition.fn}`);
             }
@@ -230,28 +259,29 @@ class MSAPipeline {
     }
   }
 
-  handleError(err, data, queueConfig, stepConfig) {
+  handleError(err: Error, data: any, queueConfig: queue, stepConfig: Step) {
     // TODO: Add error mechanism for each pipeline. Default if using gateway is to return the error to the user.
     // Move to job based invocation?
     console.error(`Callback function "${stepConfig.fn}" failed`)
     console.error(err);
   }
 
-  getInput = (context, pre) => {
+  getInput = (context: Context, pre: StepPre) => {
     if (!pre) {
       return context.data;
     }
 
+    let virtualContext = {};
     if (pre.pick) {
       if (pre.pick.key) {
-        return context.get(pre.pick.key);
+        virtualContext = context.get(pre.pick.key);
       } else {
-        return pre.pick.value;
+        virtualContext = pre.pick.value;
       }
     }
 
-    const res = new Context({});
-    let value;
+    const res = new Context(virtualContext);
+    let value: any;
     for (const key of pre.select) {
       value = key.from ? context.get(key.from) : key.value;
       if (value === undefined) { continue; }
@@ -262,7 +292,7 @@ class MSAPipeline {
     return res.data;
   }
 
-  getOutput = (output, context, post) => {
+  getOutput = (output: any, context: Context, post: StepPost) => {
     if (post === null) {
       return context.data
     }
@@ -295,10 +325,10 @@ class MSAPipeline {
     return context.data;
   }
 
-  getOutdata = (stepConfig, outContext) => {
+  getOutdata = (stepConfig: Step, outData: any): [string, number] => {
     if (stepConfig.outCondition) {
       for (const condition of stepConfig.outCondition) {
-        if (condition.fn(outContext)) {
+        if (condition.fn(outData)) {
           return [condition['outQueue'], condition['outStep']]
         }
       }
@@ -307,8 +337,8 @@ class MSAPipeline {
     return [stepConfig.outQueue, stepConfig.outStep];
   }
 
-  genReceive(queueConfig) {
-    return async (data) => {
+  genReceive(queueConfig: queue) {
+    return async (data: InvocationData) => {
       const stepConfig = queueConfig.steps[data.step];
       if (!stepConfig) {
         console.error(`Received unconfigured step "${data.step}"`);
@@ -374,12 +404,12 @@ class MSAPipeline {
    * Starts the pipeline with an initial value.
    * It is possible to override the step and context, effectivaly continueing an existing pipeline. Be sure to know exactly what you are doing!
    * This should only be used in situations where the normal communication flow is not possible.
-   * @param {Object} input The initial data of the architecture
-   * @param {number} overrideStep Override the step
-   * @param {Object} overrideContext Override the initial context with a non-empty dictionary
+   * @param input The initial data of the architecture
+   * @param overrideStep Override the step
+   * @param overrideContext Override the initial context with a non-empty dictionary
    * @returns
    */
-  run = (input, overrideStep = null, overrideContext = null, overrideReqId = null) => {
+  run = (input: any, overrideStep: Step = null, overrideContext: any = null, overrideReqId: number = null) => {
     if (!this.initialStep && !overrideStep) {
       throw new Error('ArchIO does not have a step 0 so this node is not configured to be the entrypoint');
     }
@@ -399,13 +429,15 @@ class MSAPipeline {
 }
 
 class Context {
-  constructor(initialValue) {
+  context: { [key: string]: any}
+
+  constructor(initialValue: { [key: string]: any }) {
     this.context = initialValue;
   }
 
-  static getPattern(root, path, cb) {
+  static getPattern(root: { [key: string]: any } | any[], path: string[], cb: (obj: { [key: string]: any }) => void) {
     let cur = root;
-    let key;
+    let key: string;
     path = [...path];
     while (path.length > 0) {
       if (!cur) { console.warn('Path lead to non object value before finishing!'); return; } // Invalid path
@@ -415,7 +447,7 @@ class Context {
         key = key.substring(0, key.length - 2);
 
         if (key) { cur = cur[key]; }
-        for (const obj of cur) {
+        for (const obj of cur as any[]) {
           Context.getPattern(obj, path, cb);
         }
         return; // Other invocations have finished the work recursivally.
@@ -432,7 +464,7 @@ class Context {
     cb(cur);
   }
 
-  resolve(key, cb) {
+  resolve(key: string, cb: (parent: { [key: string]: any }, childKey: string) => void) {
     const path = key.split('.');
     if (path.length === 1 && !path[0].endsWith('[]')) {
       return cb(this.context, path[0]);
@@ -442,7 +474,7 @@ class Context {
     Context.getPattern(this.context, path, (parent) => cb(parent, childKey));
   }
 
-  get(key) {
+  get(key: string) {
     const res = [];
     this.resolve(key, (parent, childKey) => {
       if (parent) {
@@ -457,7 +489,7 @@ class Context {
     return res;
   }
 
-  set(key, value) {
+  set(key: string, value: any) {
     const res = [];
     this.resolve(key, (parent, childKey) => {
       res.push([parent, childKey]);
@@ -487,7 +519,7 @@ class Context {
     }
   }
 
-  unset(key) {
+  unset(key: string) {
     this.resolve(key, (parent, childKey) => {
       if (parent) {
         delete parent[childKey];

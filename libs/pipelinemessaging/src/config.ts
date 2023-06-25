@@ -1,6 +1,6 @@
 export default {
   messaging: {
     retry_count: 20,
-    msg_timeout: false,
+    msg_timeout: 0,
   },
 }
