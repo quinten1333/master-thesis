@@ -56,8 +56,8 @@ type archIOMerged = {
     pipelines: Record<number, {
         queues: Record<string, {
             steps: Record<number, {
-                block: string
                 fn: string
+                extraArgs: any[]
                 pre?: {
                     pick: { key: string } | { value: any }
                     select?: Array<{
@@ -68,8 +68,7 @@ type archIOMerged = {
                         to: string
                     }>
                 }
-                do?: string
-                post: {
+                post?: {
                     set: string
                     upsert: Array<{
                         from: string
@@ -80,15 +79,14 @@ type archIOMerged = {
                     }>
                     unset: string[]
                 }
-                extraArgs: any[]
                 outStep?: number
                 outQueue?: string
+                implicitOutStep?: number
                 outCondition?: Array<{
                     fn: (context: any) => boolean
                     outStep: number
                     outQueue: string
                 }>
-                implicitOutStep?: number
             }>
         }>
     }>

@@ -96,6 +96,7 @@ type CompiledArchitectureMerged = {
             steps: Record<number, {
                 block: string
                 fn: string
+                extraArgs: any[]
                 pre?: {
                     pick: { key: string } | { value: any }
                     select?: Array<{
@@ -106,8 +107,7 @@ type CompiledArchitectureMerged = {
                         to: string
                     }>
                 }
-                do?: string
-                post: {
+                post?: {
                     set: string
                     upsert: Array<{
                         from: string
@@ -118,13 +118,12 @@ type CompiledArchitectureMerged = {
                     }>
                     unset: string[]
                 }
-                extraArgs: any[]
                 outStep?: number
+                implicitOutStep?: number
                 outCondition?: Array<{
                     fn: string
                     outStep: number
                 }>
-                implicitOutStep?: number
             }>
         }>
     }>
