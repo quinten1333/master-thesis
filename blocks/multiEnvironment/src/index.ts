@@ -19,6 +19,6 @@ io.register('send', async ({ input, reqId }, args: { endpoint: string, sharedSec
     context: input,
   });
 });
-io.register('receive', () => { }) // So the function exists, however this will never be executed.
+io.register('receive', () => { throw new Error('The receive function should never be executed'); }) // So the function exists, however this will never be executed.
 
 io.start();
