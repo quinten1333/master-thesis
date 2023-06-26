@@ -1,7 +1,8 @@
 # YAML file structure
 The following top level keys are defined:
-- name: The name of the architecture for personal reference
-- endpoint - Then amqp messaging end point all services will connect to
+- name - The name of the architecture for personal reference.
+- id - A unique ID to identify the architecture cross environment.
+- environments - The environments that may be used in the architecture with their configuration. Further explenation below.
 - datasets - The datasets that are used in the architecture. Further explenation below.
 - userStories - A list of user stories. Further explenation below.
 
@@ -9,8 +10,9 @@ The following top level keys are defined:
 ## datasets
 The datasets consist of the following structure:
 ```yaml
-<key>:
-  type: <type>
+datasets:
+  <key>:
+    type: <type>
 ```
 
 ### mongodb type
@@ -18,6 +20,22 @@ The MongoDB type has the keys:
 - url: The url of the mongodb database
 - db: The database name of the mongodb database
 - collection: The name of the collection within the database
+
+## environments
+The environments section has the following structure:
+```yaml
+environments:
+  <name>:
+    managementEndpoint: <url>
+    pipelineEndpoint: <url>
+    endpoint: <uri>
+    default: <boolean>
+```
+
+- managementEndpoint - Then url of the architecture manager 
+- pipelineEndpoint - Then amqp messaging end point all services will connect to
+- endpoint - Then amqp messaging end point all services will connect to for runtime communication
+- default - If this architecture should be used as default when no environment is defined in a step
 
 ## userStories
 ```yaml
@@ -44,8 +62,9 @@ This notation can also be used for arrays. `users[].firstname` would result in a
 
 The structure has the following structure:
 - pre: Steps that are taken before execution to create a view from the state. If this is not present the whole state will be passed.
-- do: The user story string
+- do: The user story string.
 - post: Steps that specify how the state should be updated. If this is not present the whole state will be overwritten with the result.
+- environment: In which environment this step wil execute.
 
 A general structure with all options shown is:
 ```yaml
@@ -60,6 +79,7 @@ post:
   - <key> [as <differentName>]
   unset:
   - <key>
+environment: <name>
 ```
 
 ##### pre
@@ -72,3 +92,37 @@ There are three post operations:
 - set: This assigns the output of the function to the supplied key.
 - upsert: Update or insert the given keys from the output dictionary in the state, optionally renaming them. Or upserting hardcoded values into the state. This could be used to initialize arrays before filling them.
 - unset: Remove variables from the state which are no longer needed after that step.
+
+## Complete example
+```yaml
+name: <name>
+id: <id>
+datasets:
+  <key>:
+    type: <type>
+    typeSpecificConfig...:
+environments:
+  <name>:
+    managementEndpoint: <url>
+    pipelineEndpoint: <url>
+    endpoint: <uri>
+    default: <boolean>
+  ...:
+userStories:
+- given: <user story>
+  then:
+  - pre:
+      pick: <key>
+      select:
+      - <key> [as <differentName>]
+    do: <user story>
+    post:
+      set: <key>
+      upsert:
+      - <key> [as <differentName>]
+      unset:
+      - <key>
+    environment: <name>
+  - ...
+- ...
+```
