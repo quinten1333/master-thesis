@@ -1,7 +1,7 @@
 import secrets
 
 from .exceptions import *
-from .cfg import getTargetIds
+from .cfg import getTargets
 from .Context import context
 
 def validateEnvironments(environments: dict):
@@ -42,8 +42,8 @@ def resolveEnvironment(pipelineId, story: dict):
   highestStep = max(story.keys())
 
   for step in story.values():
-    for targetId in getTargetIds(step):
-      target = story[targetId]
+    for cond in getTargets(step):
+      target = story[cond['outStep']]
 
       if step['environment'] == target['environment']:
         continue
@@ -69,13 +69,13 @@ def resolveEnvironment(pipelineId, story: dict):
       newStory[receivingStep] = {
         'block': 'multiEnvironment',
         'fn': 'receive',
-        'outStep': step['outStep'],
+        'outStep': cond['outStep'],
         'environment': target['environment'],
         'extraArgs': [{
           'sharedSecret': sharedSecret,
         }],
       }
-      step['outStep'] = sendingStep
+      cond['outStep'] = sendingStep
 
   return newStory
 
