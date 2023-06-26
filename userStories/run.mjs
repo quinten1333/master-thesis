@@ -18,7 +18,11 @@ async function main() {
   await fs.writeFile('../libs/pipelinemessaging/reboot.js', 'reboot');
   await sleep(750);
 
-
+  if(process.argv.length > 2) {
+    await handleFile(process.argv[2])
+    return;
+  }
+  
   const root = './examples';
   for (const file of await fs.readdir(root, { withFileTypes: true })) {
     if (!file.isFile()) { continue; }
