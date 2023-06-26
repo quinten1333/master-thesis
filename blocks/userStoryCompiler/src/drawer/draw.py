@@ -21,7 +21,6 @@ def read():
         step['environment'] = envName
         pipelines[pipelineId][stepId] = step
 
-  print(pipelines)
   if len(pipelines.keys()) == 0:
     print('Error: No pipelines found in file', file=sys.stderr)
     exit(1)
