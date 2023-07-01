@@ -18,7 +18,8 @@ class Server {
   }
 
   static findStepConfig(pipeline: any, searchStep: string) {
-    for (const queue of Object.values(pipeline.pipeIO.queues)) {
+    const queueConfigs: Array<any> = Object.values(pipeline.pipeIO.queues);
+    for (const queue of queueConfigs) {
       for (const step in queue.steps) {
         if (step == searchStep) {
           return queue.steps[step];
