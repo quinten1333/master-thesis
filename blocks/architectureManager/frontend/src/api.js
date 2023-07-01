@@ -65,5 +65,5 @@ export const genAPI = (baseUrl) => {
 
 const ROOT = process.env.ROOT || process.env.REACT_APP_ROOT;
 const PROTOCOL = process.env.PROTOCOL || process.env.REACT_APP_PROTOCOL;
-const api = genAPI(`${PROTOCOL}://${ROOT}`);
+const api = genAPI(PROTOCOL && ROOT ? `${PROTOCOL}://${ROOT}` : window.location.origin);
 export default api;
