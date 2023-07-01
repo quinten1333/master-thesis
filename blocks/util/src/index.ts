@@ -18,6 +18,8 @@ io.register('select', ({ input }, i) => input[i]);
 io.register('shift', ({ input }: { input: Array<any> }) => input.shift())
 io.register('pop', ({ input }: { input: Array<any> }) => input.pop())
 io.register('push', ({ input }: { input: { array: Array<any>, value: any }}) => { input.array.push(input.value); return input.array; })
+io.register('sum', ({ input }: { input: Array<number> }) => input.reduce((sum, cur) => sum + cur, 0))
+io.register('avg', ({ input }: { input: Array<number> }) => input.reduce((sum, cur) => sum + cur, 0) / input.length)
 
 // State
 io.register('set', (_, value) => value)

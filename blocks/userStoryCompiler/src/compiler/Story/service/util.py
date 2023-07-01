@@ -12,6 +12,8 @@ stories = [
   Story(f'^pop array', lambda config, match: ({ 'block': 'util', 'fn': 'pop', 'extraArgs': [ ] })),
   Story(f'^shift array', lambda config, match: ({ 'block': 'util', 'fn': 'shift', 'extraArgs': [ ] })),
   Story(f'^push array', lambda config, match: ({ 'block': 'util', 'fn': 'push', 'extraArgs': [ ] })),
+  Story(f'^sum', lambda config, match: ({ 'block': 'util', 'fn': 'sum', 'extraArgs': [ ] })),
+  Story(f'^average', lambda config, match: ({ 'block': 'util', 'fn': 'avg', 'extraArgs': [ ] })),
 
   Story(f'^set state {obj}', lambda config, match, value: ({ 'block': 'util', 'fn': 'set', 'extraArgs': [ objParse(value) ] })),
   Story('^log state', lambda config, match: ({ 'block': 'util', 'fn': 'log', 'extraArgs': [ ] })),
