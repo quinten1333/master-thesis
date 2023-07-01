@@ -1,0 +1,96 @@
+name: Multi environment
+id: 42
+datasets:
+  uva:
+    type: mongodb
+    url: mongodb://expenses-uva
+    db: expenses
+    collection: expenses
+  central:
+    type: mongodb
+    url: mongodb://expenses-central
+    db: expenses
+    collection: expenses
+  surf:
+    type: mongodb
+    url: mongodb://expenses-surf
+    db: expenses
+    collection: expenses
+environments:
+  central:
+    managementEndpoint: https://central.thesis.dev.qrcsoftware.nl
+    pipelineEndpoint: https://pipeline.central.thesis.dev.qrcsoftware.nl
+    endpoint: amqp://rabbitmq
+    default: true
+  uva:
+    managementEndpoint: https://uva.thesis.dev.qrcsoftware.nl
+    pipelineEndpoint: https://pipeline.uva.thesis.dev.qrcsoftware.nl
+    endpoint: amqp://rabbitmq
+  surf:
+    managementEndpoint: https://surf.thesis.dev.qrcsoftware.nl
+    pipelineEndpoint: https://pipeline.surf.thesis.dev.qrcsoftware.nl
+    endpoint: amqp://rabbitmq
+userStories:
+- given: a http get request with path "/get" on port 3000
+  then:
+  - pre:
+      pick: '`{}`'
+    do: query dataset "uva" match state
+    post:
+      set: res
+    environment: uva
+  - pre:
+      pick: res[].amount
+    do: sum
+    post:
+      set: result.uva.sum
+    environment: uva
+  - pre:
+      pick: res[].amount
+    do: average
+    post:
+      set: result.uva.avg
+    environment: uva
+
+  - pre:
+      pick: '`{}`'
+    do: query dataset "central" match state
+    post:
+      set: res
+    environment: central
+  - pre:
+      pick: res[].amount
+    do: sum
+    post:
+      set: result.central.sum
+    environment: central
+  - pre:
+      pick: res[].amount
+    do: average
+    post:
+      set: result.central.avg
+    environment: central
+
+  - pre:
+      pick: '`{}`'
+    do: query dataset "surf" match state
+    post:
+      set: res
+    environment: surf
+  - pre:
+      pick: res[].amount
+    do: sum
+    post:
+      set: result.surf.sum
+    environment: surf
+  - pre:
+      pick: res[].amount
+    do: average
+    post:
+      set: result.surf.avg
+    environment: surf
+
+  - pre:
+      select:
+      - result as body
+    do: respond to the http request on port 3000
