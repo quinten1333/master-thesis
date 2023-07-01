@@ -17,7 +17,7 @@ async function main() {
     return;
   }
 
-  await execFilePromise('node', ['../../../cli/cli.js', './compiled.yml']);
+  await execFilePromise('node', ['../../../cli/cli.js', 'push', './compiled.yml']);
 }
 
 main();
