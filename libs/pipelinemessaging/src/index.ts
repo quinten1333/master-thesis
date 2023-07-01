@@ -7,6 +7,7 @@
  */
 type blockFunction = (input: { reqId: number, input: any, pipeline: MSAPipeline } | { pipeline: MSAPipeline, start: boolean }, ...args: any[]) => any;
 type functionsDict = { [name: string]: blockFunction }
+type typesDict = { [name: string]: (data: any) => any }
 type InvocationData = { reqId: number, step: number, context: any}
 
 import AMQPConn from "./messaging.js";
@@ -51,6 +52,7 @@ export default class Pipelinemessaging {
   config: PipelineMessagingConfig
   conn: AMQPConn
   functions: functionsDict
+  types: typesDict
   arches: { [id: number]: MSAArchitecture }
 
   constructor() {
@@ -59,10 +61,11 @@ export default class Pipelinemessaging {
     this.conn = null;
 
     this.functions = {};
+    this.types = {};
     this.arches = {};
   }
 
-  register(name: string, fn) {
+  register(name: string, fn: blockFunction) {
     if (this.started) {
       throw new Error('Cannot register a function after messaging has started');
     }
@@ -71,6 +74,17 @@ export default class Pipelinemessaging {
     }
 
     this.functions[name] = fn;
+  }
+
+  registerType(name: string, fn: (data: any) => any) {
+    if (this.started) {
+      throw new Error('Cannot register a function after messaging has started');
+    }
+    if (typeof fn !== 'function') {
+      throw new Error('Given callback is not a function, received: ' + fn);
+    }
+
+    this.types[name] = fn;
   }
 
   readConfig(config?: PipelineMessagingConfig) {
@@ -91,7 +105,7 @@ export default class Pipelinemessaging {
         return;
       }
 
-      this.arches[archID] = new MSAArchitecture(archIO, this.functions);
+      this.arches[archID] = new MSAArchitecture(archIO, this.functions, this.types);
       this.arches[archID].start();
     },
     delete: ({ archID }) => {
@@ -129,6 +143,7 @@ export default class Pipelinemessaging {
 
 class MSAArchitecture {
   functions: functionsDict
+  types: typesDict
   archIO: archIO
   id: number
 
@@ -136,9 +151,10 @@ class MSAArchitecture {
   conn: AMQPConn
   pipelines: MSAPipeline[]
 
-  constructor(archIO: archIO, functions: functionsDict) {
+  constructor(archIO: archIO, functions: functionsDict, types: typesDict) {
     this.archIO = archIO;
     this.functions = functions;
+    this.types = types;
     this.validateIO();
     this.id = this.archIO.id;
 
@@ -172,7 +188,7 @@ class MSAArchitecture {
     await this.conn.connect();
 
     for (const pipeId in this.archIO.pipelines) {
-      const pipeline = new MSAPipeline(pipeId, this.archIO.pipelines[pipeId], this.functions, this.conn);
+      const pipeline = new MSAPipeline(pipeId, this.archIO.pipelines[pipeId], this.functions, this.types, this.conn);
       await pipeline.start();
       this.pipelines.push(pipeline);
     }
@@ -190,7 +206,8 @@ class MSAArchitecture {
 }
 
 class MSAPipeline {
-  functions: { [name: string]: blockFunction }
+  functions: functionsDict
+  types: typesDict
   pipeId: string
   pipeIO: pipeIO
 
@@ -202,10 +219,11 @@ class MSAPipeline {
   initialQueue: queue
 
 
-  constructor(pipeId: string, pipeIO: pipeIO, functions: functionsDict, conn: AMQPConn) {
+  constructor(pipeId: string, pipeIO: pipeIO, functions: functionsDict, types: typesDict, conn: AMQPConn) {
     this.pipeId = pipeId;
     this.pipeIO = pipeIO;
     this.functions = functions;
+    this.types = types;
     this.conn = conn;
 
     this.started = false;
@@ -255,6 +273,17 @@ class MSAPipeline {
           }
         }
 
+        if (stepConfig.pre && stepConfig.pre.select) {
+          for (const select of stepConfig.pre.select) {
+            if (!select.type) continue;
+
+            const array = select.type.endsWith('[]')
+            if ((!array && !(select.type in this.types)) || (array && !(select.type.substring(0, select.type.length - 2) in this.types))) {
+              throw new Error(`Type "${select.type}" is used but is not registered by the block`);
+            }
+          }
+        }
+
       }
     }
   }
@@ -286,7 +315,18 @@ class MSAPipeline {
       for (const key of pre.select) {
         value = key.from ? context.get(key.from) : key.value;
         if (value === undefined) { continue; }
-  
+
+        if (key.type) {
+          if (key.type.endsWith('[]')) {
+            const type = key.type.substring(0, key.type.length - 2)
+            for (const i in value) {
+              value[i] = this.types[type](value[i]);
+            }
+          } else {
+            value = this.types[key.type](value);
+          }
+        }
+
         res.set(key.to, value)
       }
     }

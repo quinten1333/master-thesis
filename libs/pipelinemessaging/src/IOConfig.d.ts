@@ -37,6 +37,7 @@ type StepPre = {
         from?: string
         value?: string
         to: string
+        type: string
     }>
 }
 
