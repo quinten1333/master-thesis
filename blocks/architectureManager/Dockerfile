@@ -18,4 +18,6 @@ RUN cd frontend && npm ci
 RUN npm run build
 RUN rm -r frontend
 
+COPY --from=libs . /app/node_modules/@amicopo
+
 ENTRYPOINT npm start
