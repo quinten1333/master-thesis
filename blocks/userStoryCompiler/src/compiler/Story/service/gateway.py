@@ -23,7 +23,7 @@ class Gateway:
   def getConfig(self):
     return self.config
 
-request = Story(f'^http (get|post|put|patch|delete)? ?request path {sobj} port {iobj} ', lambda config, match, method, path, port: Gateway(path, objParse(port), method))
+request = Story(f'^http (get|post|put|patch|delete)? ?request path {sobj} port {iobj} ?', lambda config, match, method, path, port: Gateway(path, objParse(port), method))
 request.register(Story(f'(?: and )?( optional )?parameter {sobj} of type {sobj}', lambda config, match, optional, param, type: config.paramOfType(param, type, bool(optional))))
 
 respond = Story(f'^respond http request port {iobj}', lambda config, match, port: GenericConfig('gateway', 'reply', { 'port': port })) #TODO: Remove the need to supply the port using the context
