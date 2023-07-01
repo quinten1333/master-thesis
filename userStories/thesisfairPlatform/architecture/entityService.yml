@@ -9,7 +9,7 @@
       set: token
   - pre:
       select:
-      - enid as _id
+      - enid as _id type ObjectId
     do: query dataset "db-entities" find one match state
     post:
       set: res
@@ -65,7 +65,7 @@
       set: token
   - pre:
       select:
-      - enids as _id.$in
+      - enids as _id.$in type ObjectId[]
     do: query dataset "db-entities" match state
     post:
       set: res
@@ -190,7 +190,7 @@
     - stop
   - pre:
       select:
-      - enid as query._id
+      - enid as query._id type ObjectId
       - name as set.$set.name
       - description as set.$set.description
       - type as set.$set.type
@@ -202,7 +202,7 @@
     post:
   - pre:
       select:
-      - enid as _id
+      - enid as _id type ObjectId
     do: query dataset "db-entities" find one
     post:
       set: res
@@ -234,7 +234,7 @@
     - stop
   - pre:
       select:
-      - enid as _id
+      - enid as _id type ObjectId
     do: query dataset "db-entities" find one match state
     post:
       set: res
@@ -246,7 +246,7 @@
       - res.contact[]._id
   - pre:
       select:
-      - enid as _id
+      - enid as _id type ObjectId
     do: delete from dataset "db-entities" one
     post:
   - pre:
