@@ -6,26 +6,33 @@ def lmap(*args, **kwargs):
   return [*map(*args, **kwargs)]
 
 def normalizeSelection(text: str):
-  split = ' '.join(textAnalyser.word_tokenize(text)).split(' as ')
-  if len(split) > 2:
-    raise ParseError(f'Text "{text}" contains multiple " as " statements.')
+  tokens = textAnalyser.word_tokenize(text)
 
-  split[0] = split[0].strip()
-  if len(split) == 2: split[1] = split[1].strip()
+  key = tokens.pop(0).strip()
+  to = None
+  type = None
+  if tokens and tokens[0] == 'as':
+    tokens.pop(0)
+    to = tokens.pop(0)
+  if tokens and tokens[0] == 'type':
+    tokens.pop(0)
+    type = tokens.pop(0)
 
-  match = objCompiled.match(split[0])
+  match = objCompiled.match(key)
   if match:
-    if len(split) != 2:
+    if to == None:
       raise ParseError(f'When using literal values its required to specify its key (`value` as key).')
 
     return {
       'value': objParse(match.group(1)),
-      'to': split[1]
+      'to': to,
+      **({ 'type': type } if type else {}),
     }
 
   return {
-    'from': split[0],
-    'to': split[1] if len(split) == 2 else split[0]
+    'from': key,
+    'to': to if to else key,
+    **({ 'type': type } if type else {}),
   }
 
 def normalizePick(text: str):
